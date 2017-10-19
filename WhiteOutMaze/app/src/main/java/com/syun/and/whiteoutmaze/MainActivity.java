@@ -4,7 +4,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -12,9 +11,14 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-public class MainActivity extends AppCompatActivity implements SurfaceHolder.Callback2, View.OnTouchListener {
+
+public class MainActivity extends BaseActivity implements SurfaceHolder.Callback2, View.OnTouchListener, Runnable {
     private static final String TAG = MainActivity.class.getSimpleName();
+
+    private ExecutorService mExecutor;
 
     private SurfaceView mSurfaceView;
 
@@ -29,10 +33,16 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     private Path path;
     private Paint paint;
 
+    private float cX, cY;
+    private boolean shouldFollow;
+    private Paint cPaint;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mExecutor = Executors.newSingleThreadExecutor();
 
         mSurfaceView = findViewById(R.id.surfaceView);
         mSurfaceView.getHolder().addCallback(this);
@@ -46,6 +56,11 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         paint.setAntiAlias(true);
         paint.setStrokeJoin(Paint.Join.ROUND);
         paint.setStrokeCap(Paint.Cap.ROUND);
+
+        cPaint = new Paint();
+        cPaint.setColor(Color.MAGENTA);
+        cPaint.setStyle(Paint.Style.FILL);
+        paint.setAntiAlias(true);
     }
 
     @Override
@@ -98,10 +113,18 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         this.mSurfaceWidth = width;
         this.mSurfaceHeight = height;
         mSurfaceView.setOnTouchListener(this);
+
+        cX = (float) (Math.random() * mSurfaceWidth);
+        cY = (float) (Math.random() * mSurfaceHeight);
+
+        if(mExecutor.isShutdown()){
+            mExecutor = Executors.newSingleThreadExecutor();
+        }
+        mExecutor.submit(this);
     }
 
     private void stopDrawing() {
-
+        mExecutor.shutdownNow();
     }
 
 
@@ -110,22 +133,21 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
         switch (motionEvent.getAction()) {
             case MotionEvent.ACTION_DOWN :
-                path.reset();
+                shouldFollow = true;
+//                path.reset();
 
                 preX = motionEvent.getX();
                 preY = motionEvent.getY();
 
-                path.moveTo(preX, preY);
+//                path.moveTo(preX, preY);
 
-                draw();
                 break;
 
             case MotionEvent.ACTION_MOVE :
-            case MotionEvent.ACTION_UP :
                 postX = motionEvent.getX();
                 postY = motionEvent.getY();
 
-                path.lineTo(postX, postY);
+//                path.lineTo(postX, postY);
 
                 deltaX = postX - preX;
                 deltaY = postY - preY;
@@ -140,17 +162,56 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
                 preX = postX;
                 preY = postY;
-                draw();
+                break;
+
+            case MotionEvent.ACTION_UP :
+                shouldFollow = false;
                 break;
         }
         return true;
     }
 
+
+    float dx, dy;
     private void draw() {
         Canvas canvas = mSurfaceHolder.lockCanvas();
         canvas.drawColor(Color.BLACK);
-        canvas.drawPath(path, paint);
+//        canvas.drawPath(path, paint);
+
+        if(shouldFollow) {
+            dx = preX - cX;
+            dy = preY - cY;
+
+            if(dx > 0) {
+                cX++;
+            } else {
+                cX--;
+            }
+
+            if(dy > 0) {
+                cY++;
+            } else {
+                cY--;
+            }
+        }
+        canvas.drawCircle(cX, cY, 10.0f, cPaint);
+
+        // TODO : blinking
+
         mSurfaceHolder.unlockCanvasAndPost(canvas);
+    }
+
+    @Override
+    public void run() {
+        while(!mExecutor.isShutdown()) {
+            draw();
+
+            try {
+                Thread.sleep(25);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 }
