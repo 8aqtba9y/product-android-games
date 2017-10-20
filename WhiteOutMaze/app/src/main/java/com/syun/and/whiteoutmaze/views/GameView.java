@@ -1,10 +1,11 @@
-package com.syun.and.whiteoutmaze;
+package com.syun.and.whiteoutmaze.views;
 
+import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.os.Bundle;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -14,13 +15,14 @@ import android.view.View;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * Created by qijsb on 2017/10/21.
+ */
 
-public class MainActivity extends BaseActivity implements SurfaceHolder.Callback2, View.OnTouchListener, Runnable {
-    private static final String TAG = MainActivity.class.getSimpleName();
+public class GameView extends SurfaceView implements SurfaceHolder.Callback2, View.OnTouchListener, Runnable {
+    private static final String TAG = GameView.class.getSimpleName();
 
     private ExecutorService mExecutor;
-
-    private SurfaceView mSurfaceView;
 
     private SurfaceHolder mSurfaceHolder;
     private int mSurfaceWidth;
@@ -37,15 +39,23 @@ public class MainActivity extends BaseActivity implements SurfaceHolder.Callback
     private boolean shouldFollow;
     private Paint cPaint;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+    public GameView(Context context) {
+        super(context);
+        init();
+    }
 
+    public GameView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        init();
+    }
+
+    public GameView(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        init();
+    }
+
+    private void init() {
         mExecutor = Executors.newSingleThreadExecutor();
-
-        mSurfaceView = findViewById(R.id.surfaceView);
-        mSurfaceView.getHolder().addCallback(this);
 
         path = new Path();
 
@@ -61,21 +71,11 @@ public class MainActivity extends BaseActivity implements SurfaceHolder.Callback
         cPaint.setColor(Color.MAGENTA);
         cPaint.setStyle(Paint.Style.FILL);
         paint.setAntiAlias(true);
+
+        getHolder().addCallback(this);
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Log.d(TAG, "onResume: ");
-    }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        Log.d(TAG, "onPause: ");
-        // TODO : should stop drawing
-        stopDrawing();
-    }
 
     /*
         onResume:
@@ -106,13 +106,14 @@ public class MainActivity extends BaseActivity implements SurfaceHolder.Callback
     @Override
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
         Log.d(TAG, "surfaceDestroyed: ");
+        stopDrawing();
     }
 
-    private void startDrawing(SurfaceHolder holder, int width, int height) {
+    public void startDrawing(SurfaceHolder holder, int width, int height) {
         this.mSurfaceHolder = holder;
         this.mSurfaceWidth = width;
         this.mSurfaceHeight = height;
-        mSurfaceView.setOnTouchListener(this);
+        setOnTouchListener(this);
 
         cX = (float) (Math.random() * mSurfaceWidth);
         cY = (float) (Math.random() * mSurfaceHeight);
@@ -123,8 +124,10 @@ public class MainActivity extends BaseActivity implements SurfaceHolder.Callback
         mExecutor.submit(this);
     }
 
-    private void stopDrawing() {
-        mExecutor.shutdownNow();
+    public void stopDrawing() {
+        if(!mExecutor.isShutdown()) {
+            mExecutor.shutdownNow();
+        }
     }
 
 

@@ -1,4 +1,4 @@
-package com.syun.and.whiteoutmaze;
+package com.syun.and.whiteoutmaze.activites;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
