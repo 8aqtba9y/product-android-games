@@ -1,10 +1,10 @@
 package com.syun.and.whiteoutmaze.views;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Path;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -12,13 +12,14 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 
+import com.syun.and.whiteoutmaze.R;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
  * Created by qijsb on 2017/10/21.
  */
-
 public class GameView extends SurfaceView implements SurfaceHolder.Callback2, View.OnTouchListener, Runnable {
     private static final String TAG = GameView.class.getSimpleName();
 
@@ -28,66 +29,57 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Vi
     private int mSurfaceWidth;
     private int mSurfaceHeight;
 
-    private float preX, preY, postX, postY, deltaX, deltaY;
-    private float distance;
-    private static final float THRESHOLD = 10.0f;
+    private float catX, catY;
 
-    private Path path;
-    private Paint paint;
+    private Context mContext;
 
-    private float cX, cY;
-    private boolean shouldFollow;
-    private Paint cPaint;
+    private final static int FPS = 1000 / 30;
+    private static final int COLUMNS = 10;
+
+    private int catSize;
+    private int homeSize;
+    private int catSpeed;
+
+    private Bitmap cat, home;
+
+    private int squareSize;
+    private boolean shouldMove;
+
+    private boolean isUpArrowKeyPressed;
+    private boolean isLeftArrowKeyPressed;
+    private boolean isRightArrowKeyPressed;
+    private boolean isDownArrowKeyPressed;
 
     public GameView(Context context) {
         super(context);
-        init();
+        this.mContext = context;
     }
 
     public GameView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init();
+        this.mContext = context;
     }
 
     public GameView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init();
+        this.mContext = context;
     }
 
-    private void init() {
+    /**
+     * 1. handle touch events
+     * 2. update members
+     *
+     * loop { draw with members }
+     */
+    public void init() {
         mExecutor = Executors.newSingleThreadExecutor();
-
-        path = new Path();
-
-        paint = new Paint();
-        paint.setColor(Color.WHITE);
-        paint.setStrokeWidth(10.0f);
-        paint.setStyle(Paint.Style.STROKE);
-        paint.setAntiAlias(true);
-        paint.setStrokeJoin(Paint.Join.ROUND);
-        paint.setStrokeCap(Paint.Cap.ROUND);
-
-        cPaint = new Paint();
-        cPaint.setColor(Color.MAGENTA);
-        cPaint.setStyle(Paint.Style.FILL);
-        paint.setAntiAlias(true);
 
         getHolder().addCallback(this);
     }
 
-
-
-    /*
-        onResume:
-        surfaceCreated:
-        surfaceChanged:
-
-        onPause:
-        surfaceDestroyed:
-     */
-
     @Override
     public void surfaceRedrawNeeded(SurfaceHolder surfaceHolder) {
+
     }
 
     @Override
@@ -95,12 +87,35 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Vi
         Log.d(TAG, "surfaceCreated: ");
     }
 
-
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        Log.d(TAG, "surfaceChanged: ");
-        // TODO : should start drawing
+        Log.d(TAG, "surfaceChanged: [width, height] # ["+width+", "+height+"]");
+
+        squareSize = width / COLUMNS;
+        Log.d(TAG, "surfaceChanged: squareSize # "+squareSize);
+
+        initComponents();
+
         startDrawing(holder, width, height);
+    }
+
+    private void initComponents() {
+        if(cat == null && home == null) {
+            // TODO : set factors
+            catSize = squareSize / 2;
+            homeSize = squareSize / 1;
+            catSpeed = squareSize / 12;
+
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inSampleSize = 2;
+            cat = BitmapFactory.decodeResource(getResources(), R.drawable.cat, options);
+            cat = Bitmap.createScaledBitmap(cat, catSize, catSize, true);
+
+            home = BitmapFactory.decodeResource(getResources(), R.drawable.home, options);
+            home = Bitmap.createScaledBitmap(home, homeSize, homeSize, true);
+
+            // TODO : create cat's footPrints bitmap
+        }
     }
 
     @Override
@@ -115,10 +130,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Vi
         this.mSurfaceHeight = height;
         setOnTouchListener(this);
 
-        cX = (float) (Math.random() * mSurfaceWidth);
-        cY = (float) (Math.random() * mSurfaceHeight);
-
-        if(mExecutor.isShutdown()){
+        if(mExecutor.isShutdown()) {
             mExecutor = Executors.newSingleThreadExecutor();
         }
         mExecutor.submit(this);
@@ -130,87 +142,75 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Vi
         }
     }
 
-
     @Override
     public boolean onTouch(View view, MotionEvent motionEvent) {
-
-        switch (motionEvent.getAction()) {
-            case MotionEvent.ACTION_DOWN :
-                shouldFollow = true;
-//                path.reset();
-
-                preX = motionEvent.getX();
-                preY = motionEvent.getY();
-
-//                path.moveTo(preX, preY);
-
-                break;
-
-            case MotionEvent.ACTION_MOVE :
-                postX = motionEvent.getX();
-                postY = motionEvent.getY();
-
-//                path.lineTo(postX, postY);
-
-                deltaX = postX - preX;
-                deltaY = postY - preY;
-                distance = (float) Math.sqrt(
-                        Math.pow(deltaX, 2) + Math.pow(deltaY, 2)
-                );
-                if(distance > THRESHOLD) {
-                    // TODO : do not add path
-                } else {
-                    // TODO : add path
-                }
-
-                preX = postX;
-                preY = postY;
-                break;
-
-            case MotionEvent.ACTION_UP :
-                shouldFollow = false;
-                break;
-        }
+        showKeyBoard(motionEvent);
         return true;
     }
 
+    private void showKeyBoard(MotionEvent motionEvent) {
+        // TODO : show keyBoard
+    }
 
-    float dx, dy;
-    private void draw() {
-        Canvas canvas = mSurfaceHolder.lockCanvas();
-        canvas.drawColor(Color.BLACK);
-//        canvas.drawPath(path, paint);
+    private void configure(Canvas canvas) {
+        // TODO : draw a Map
 
-        if(shouldFollow) {
-            dx = preX - cX;
-            dy = preY - cY;
+        canvas.drawColor(Color.WHITE);
 
-            if(dx > 0) {
-                cX++;
-            } else {
-                cX--;
-            }
+        if(shouldMove) {
+            if(isUpArrowKeyPressed)
+                catY = catY - catSpeed;
 
-            if(dy > 0) {
-                cY++;
-            } else {
-                cY--;
-            }
+            if(isLeftArrowKeyPressed)
+                catX = catX - catSpeed;
+
+            if(isRightArrowKeyPressed)
+                catX = catX + catSpeed;
+
+            if(isDownArrowKeyPressed)
+                catY = catY + catSpeed;
+
+            // TODO : check - is cat position valid?
         }
-        canvas.drawCircle(cX, cY, 10.0f, cPaint);
 
-        // TODO : blinking
+        canvas.drawBitmap(cat, catX - cat.getWidth() / 2, catY - cat.getHeight() / 2, null);
 
-        mSurfaceHolder.unlockCanvasAndPost(canvas);
+        canvas.drawBitmap(home, 400 - home.getWidth() / 2, 400 - home.getHeight() / 2, null);
+    }
+
+    public void setUpArrowKeyPressed(boolean b){
+        this.isUpArrowKeyPressed = b;
+        shouldMove();
+    }
+
+    public void setLeftArrowKeyPressed(boolean b){
+        this.isLeftArrowKeyPressed = b;
+        shouldMove();
+    }
+
+    public void setRightArrowKeyPressed(boolean b){
+        this.isRightArrowKeyPressed = b;
+        shouldMove();
+    }
+
+    public void setDownArrowKeyPressed(boolean b) {
+        this.isDownArrowKeyPressed = b;
+        shouldMove();
+    }
+
+    private void shouldMove() {
+        shouldMove = isUpArrowKeyPressed || isLeftArrowKeyPressed || isRightArrowKeyPressed || isDownArrowKeyPressed;
     }
 
     @Override
     public void run() {
         while(!mExecutor.isShutdown()) {
-            draw();
+            Canvas canvas = mSurfaceHolder.lockCanvas();
+            configure(canvas);
+            mSurfaceHolder.unlockCanvasAndPost(canvas);
 
             try {
-                Thread.sleep(25);
+                Thread.sleep(FPS);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
