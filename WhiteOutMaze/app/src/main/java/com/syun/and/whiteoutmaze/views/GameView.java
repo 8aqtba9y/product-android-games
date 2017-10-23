@@ -5,14 +5,20 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.widget.Toast;
 
 import com.syun.and.whiteoutmaze.R;
+import com.syun.and.whiteoutmaze.common.map.Map;
+import com.syun.and.whiteoutmaze.common.map.Map_1;
+import com.syun.and.whiteoutmaze.util.Logger;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -23,6 +29,8 @@ import java.util.concurrent.Executors;
 public class GameView extends SurfaceView implements SurfaceHolder.Callback2, View.OnTouchListener, Runnable {
     private static final String TAG = GameView.class.getSimpleName();
 
+    private Logger mLogger;
+
     private ExecutorService mExecutor;
 
     private SurfaceHolder mSurfaceHolder;
@@ -30,6 +38,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Vi
     private int mSurfaceHeight;
 
     private float catX, catY;
+    private float homeX, homeY;
 
     private Context mContext;
 
@@ -72,6 +81,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Vi
      * loop { draw with members }
      */
     public void init() {
+        mLogger = new Logger(TAG);
+
         mExecutor = Executors.newSingleThreadExecutor();
 
         getHolder().addCallback(this);
@@ -84,20 +95,21 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Vi
 
     @Override
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
-        Log.d(TAG, "surfaceCreated: ");
+        mLogger.print("surfaceCreated: ");
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        Log.d(TAG, "surfaceChanged: [width, height] # ["+width+", "+height+"]");
-
         squareSize = width / COLUMNS;
-        Log.d(TAG, "surfaceChanged: squareSize # "+squareSize);
+
+        mLogger.print("surfaceChanged: [width, height, squareSize] # ["+width+", "+height+", "+squareSize+"]");
 
         initComponents();
 
         startDrawing(holder, width, height);
     }
+
+    private Map map;
 
     private void initComponents() {
         if(cat == null && home == null) {
@@ -114,13 +126,20 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Vi
             home = BitmapFactory.decodeResource(getResources(), R.drawable.home, options);
             home = Bitmap.createScaledBitmap(home, homeSize, homeSize, true);
 
+            catX = 0 * squareSize;
+            catY = 0 * squareSize;
+
+            homeX = 4 * squareSize;
+            homeY = 4 * squareSize;
+
+            map = new Map_1(squareSize);
             // TODO : create cat's footPrints bitmap
         }
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
-        Log.d(TAG, "surfaceDestroyed: ");
+        mLogger.print("surfaceDestroyed: ");
         stopDrawing();
     }
 
@@ -152,30 +171,28 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Vi
         // TODO : show keyBoard
     }
 
-    private void configure(Canvas canvas) {
-        // TODO : draw a Map
-
-        canvas.drawColor(Color.WHITE);
-
+    private void update() {
         if(shouldMove) {
             if(isUpArrowKeyPressed)
-                catY = catY - catSpeed;
+                catY = (catY - catSpeed) < 0 ? 0 : (catY - catSpeed);
 
             if(isLeftArrowKeyPressed)
-                catX = catX - catSpeed;
+                catX = (catX - catSpeed) < 0 ? 0 : (catX - catSpeed);
 
             if(isRightArrowKeyPressed)
-                catX = catX + catSpeed;
+                catX = (catX + catSpeed) > mSurfaceWidth ? mSurfaceWidth : (catX + catSpeed);
 
             if(isDownArrowKeyPressed)
-                catY = catY + catSpeed;
-
-            // TODO : check - is cat position valid?
+                catY = (catY + catSpeed) > mSurfaceHeight ? mSurfaceHeight : (catY + catSpeed);
         }
+    }
+
+    private void present(Canvas canvas){
+        canvas.drawBitmap(map.getMap(), new Matrix(), null);
 
         canvas.drawBitmap(cat, catX - cat.getWidth() / 2, catY - cat.getHeight() / 2, null);
 
-        canvas.drawBitmap(home, 400 - home.getWidth() / 2, 400 - home.getHeight() / 2, null);
+        canvas.drawBitmap(home, homeX - home.getWidth() / 2, homeY - home.getHeight() / 2, null);
     }
 
     public void setUpArrowKeyPressed(boolean b){
@@ -205,9 +222,24 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Vi
     @Override
     public void run() {
         while(!mExecutor.isShutdown()) {
+            // update
+            update();
+
+            // switch to present
             Canvas canvas = mSurfaceHolder.lockCanvas();
-            configure(canvas);
+            present(canvas);
             mSurfaceHolder.unlockCanvasAndPost(canvas);
+
+            // check validation
+            if(checkValidation()) {
+                canvas = mSurfaceHolder.lockCanvas();
+                Paint paint = new Paint();
+                paint.setColor(Color.BLACK);
+                paint.setStyle(Paint.Style.FILL);
+                canvas.drawText("GG!", 6*squareSize, 6*squareSize, paint);
+                mSurfaceHolder.unlockCanvasAndPost(canvas);
+                break;
+            }
 
             try {
                 Thread.sleep(FPS);
@@ -215,6 +247,21 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Vi
                 e.printStackTrace();
             }
         }
+    }
+
+    private boolean checkValidation() {
+        int pixel = map.getMap().getPixel((int)catX, (int)catY);
+        mLogger.print(""+pixel);
+        if(pixel != Color.WHITE) {
+            return true;
+        }
+
+        double distance = Math.sqrt(
+                Math.pow(homeX - catX, 2)
+                + Math.pow(homeY - catY, 2)
+        );
+
+        return homeSize / 2 > distance;
     }
 
 }
