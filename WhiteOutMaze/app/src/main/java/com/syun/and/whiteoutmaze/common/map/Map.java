@@ -5,7 +5,10 @@ import android.graphics.Bitmap;
 /**
  * Created by qijsb on 2017/10/21.
  */
-
 public class Map {
-    private Bitmap map;
+    protected Bitmap map;
+
+    public Bitmap getMap() {
+        return map;
+    }
 }
