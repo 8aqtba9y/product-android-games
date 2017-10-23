@@ -7,14 +7,15 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.RectF;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
-import android.widget.Toast;
 
+import com.syun.and.whiteoutmaze.Const;
 import com.syun.and.whiteoutmaze.R;
 import com.syun.and.whiteoutmaze.common.map.Map;
 import com.syun.and.whiteoutmaze.common.map.Map_1;
@@ -29,6 +30,8 @@ import java.util.concurrent.Executors;
 public class GameView extends SurfaceView implements SurfaceHolder.Callback2, View.OnTouchListener, Runnable {
     private static final String TAG = GameView.class.getSimpleName();
 
+    private final static int FPS = 1000 / 30;
+
     private Logger mLogger;
 
     private ExecutorService mExecutor;
@@ -37,19 +40,17 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Vi
     private int mSurfaceWidth;
     private int mSurfaceHeight;
 
+    private Map map;
+
     private float catX, catY;
     private float homeX, homeY;
 
     private Context mContext;
 
-    private final static int FPS = 1000 / 30;
-    private static final int COLUMNS = 10;
-
-    private int catSize;
-    private int homeSize;
+    private int catSize, footprintSize, homeSize;
     private int catSpeed;
 
-    private Bitmap cat, home;
+    private Bitmap cat, footprint, home;
 
     private int squareSize;
     private boolean shouldMove;
@@ -100,7 +101,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Vi
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        squareSize = width / COLUMNS;
+        squareSize = width / Const.COLUMN;
 
         mLogger.print("surfaceChanged: [width, height, squareSize] # ["+width+", "+height+", "+squareSize+"]");
 
@@ -109,31 +110,40 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Vi
         startDrawing(holder, width, height);
     }
 
-    private Map map;
+    private Paint blackText;
 
     private void initComponents() {
         if(cat == null && home == null) {
+            blackText = new Paint();
+            blackText.setColor(Color.BLACK);
+            blackText.setStyle(Paint.Style.FILL);
+            blackText.setTextSize(squareSize/3);
+
             // TODO : set factors
-            catSize = squareSize / 2;
+            catSize = squareSize * 2 / 3;
+            footprintSize = squareSize / 2;
+            catSpeed = squareSize / 16;
+
             homeSize = squareSize / 1;
-            catSpeed = squareSize / 12;
 
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inSampleSize = 2;
             cat = BitmapFactory.decodeResource(getResources(), R.drawable.cat, options);
             cat = Bitmap.createScaledBitmap(cat, catSize, catSize, true);
 
+            footprint = BitmapFactory.decodeResource(getResources(), R.drawable.footprint, options);
+            footprint = Bitmap.createScaledBitmap(footprint, footprintSize, footprintSize, true);
+
             home = BitmapFactory.decodeResource(getResources(), R.drawable.home, options);
             home = Bitmap.createScaledBitmap(home, homeSize, homeSize, true);
 
-            catX = 0 * squareSize;
-            catY = 0 * squareSize;
+            catX = 0 * squareSize + squareSize / 2;
+            catY = 0 * squareSize + squareSize / 2;
 
-            homeX = 4 * squareSize;
-            homeY = 4 * squareSize;
+            homeX = 6 * squareSize + squareSize / 2;
+            homeY = 3 * squareSize + squareSize / 2;
 
             map = new Map_1(squareSize);
-            // TODO : create cat's footPrints bitmap
         }
     }
 
@@ -187,11 +197,31 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Vi
         }
     }
 
-    private void present(Canvas canvas){
-        canvas.drawBitmap(map.getMap(), new Matrix(), null);
+    int count = 0;
+    private void present(Canvas canvas) {
+        count++;
 
+        if (count > 100) {
+            canvas.drawColor(Color.WHITE);
+        } else {
+            // draw map
+            canvas.drawBitmap(map.getMap(), new Matrix(), null);
+
+            if(count < 33) {
+                canvas.drawText("3!", 6*squareSize + squareSize/4, 5*squareSize + squareSize/4, blackText);
+            } else if(count < 66) {
+                canvas.drawText("2!", 6*squareSize + squareSize/4, 5*squareSize + squareSize/4, blackText);
+            } else {
+                canvas.drawText("1!", 6*squareSize + squareSize/4, 5*squareSize + squareSize/4, blackText);
+            }
+        }
+
+        // draw footprints
+
+        // draw cat
         canvas.drawBitmap(cat, catX - cat.getWidth() / 2, catY - cat.getHeight() / 2, null);
 
+        // draw home
         canvas.drawBitmap(home, homeX - home.getWidth() / 2, homeY - home.getHeight() / 2, null);
     }
 
@@ -216,6 +246,10 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Vi
     }
 
     private void shouldMove() {
+        if(count < 100) {
+            return;
+        }
+
         shouldMove = isUpArrowKeyPressed || isLeftArrowKeyPressed || isRightArrowKeyPressed || isDownArrowKeyPressed;
     }
 
@@ -225,21 +259,35 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Vi
             // update
             update();
 
+            // check validation
+            if(checkValidation()) {
+                Canvas canvas = mSurfaceHolder.lockCanvas();
+                canvas.drawColor(Color.WHITE);
+                canvas.save();
+
+                RectF rectF = new RectF(catX- squareSize*3,catY -squareSize*3,catX +squareSize*3,catY + squareSize*3);
+                Path path = new Path();
+                path.addRoundRect(rectF,squareSize*3,squareSize*3, Path.Direction.CW);
+
+                canvas.clipPath(path);
+                canvas.drawBitmap(map.getMap(), new Matrix(), null);
+                canvas.restore();
+
+                // draw cat
+                canvas.drawBitmap(cat, catX - cat.getWidth() / 2, catY - cat.getHeight() / 2, null);
+
+                // draw home
+                canvas.drawBitmap(home, homeX - home.getWidth() / 2, homeY - home.getHeight() / 2, null);
+
+                canvas.drawText("GG!", 6*squareSize + squareSize/4, 5*squareSize + squareSize/4, blackText);
+                mSurfaceHolder.unlockCanvasAndPost(canvas);
+                break;
+            }
+
             // switch to present
             Canvas canvas = mSurfaceHolder.lockCanvas();
             present(canvas);
             mSurfaceHolder.unlockCanvasAndPost(canvas);
-
-            // check validation
-            if(checkValidation()) {
-                canvas = mSurfaceHolder.lockCanvas();
-                Paint paint = new Paint();
-                paint.setColor(Color.BLACK);
-                paint.setStyle(Paint.Style.FILL);
-                canvas.drawText("GG!", 6*squareSize, 6*squareSize, paint);
-                mSurfaceHolder.unlockCanvasAndPost(canvas);
-                break;
-            }
 
             try {
                 Thread.sleep(FPS);
@@ -251,7 +299,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Vi
 
     private boolean checkValidation() {
         int pixel = map.getMap().getPixel((int)catX, (int)catY);
-        mLogger.print(""+pixel);
         if(pixel != Color.WHITE) {
             return true;
         }
