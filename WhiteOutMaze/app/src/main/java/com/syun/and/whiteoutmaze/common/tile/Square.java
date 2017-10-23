@@ -1,7 +1,6 @@
 package com.syun.and.whiteoutmaze.common.tile;
 
 import android.graphics.Rect;
-import android.util.Log;
 
 /**
  * Created by qijsb on 2017/10/22.
@@ -12,22 +11,24 @@ public class Square extends Tile {
 
     private Rect rect;
 
-    private int mSquareSize;
-
     public Square(int squareSize) {
+        this.squareSize = squareSize;
+
+        init();
+    }
+
+    private void init() {
         rect = new Rect();
-        this.mSquareSize = squareSize;
     }
 
     public Rect getRect(int row, int column) {
         rect.setEmpty();
 
-        rect.left = mSquareSize * column;
-        rect.top = mSquareSize * row;
-        rect.right = mSquareSize * (column + 1);
-        rect.bottom = mSquareSize * (row + 1);
+        rect.left = squareSize * column;
+        rect.top = squareSize * row;
+        rect.right = squareSize * (column + 1);
+        rect.bottom = squareSize * (row + 1);
 
-        Log.d(TAG, "rect left, top, right, bottom # "+rect.left+", "+rect.top+", "+ rect.right + ", "+rect.bottom);
         return rect;
     }
 }
