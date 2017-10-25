@@ -3,10 +3,7 @@ package com.syun.and.whiteoutmaze.common.map;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.Path;
-import android.util.Log;
 
 import com.syun.and.whiteoutmaze.Const;
 import com.syun.and.whiteoutmaze.common.tile.Square;
@@ -15,28 +12,56 @@ import com.syun.and.whiteoutmaze.common.tile.TriangleBottomRight;
 import com.syun.and.whiteoutmaze.common.tile.TriangleTopLeft;
 import com.syun.and.whiteoutmaze.common.tile.TriangleTopRight;
 
+import java.util.Random;
+
 /**
  * Created by qijsb on 2017/10/23.
  */
 public class Map_1 extends Map {
     private static final String TAG = Map_1.class.getSimpleName();
+
     private int[][] tiles = {
-             {0,1,0,0,1,1,1,1,1,1}
-            ,{0,3,4,0,0,0,0,0,3,1}
-            ,{0,0,1,0,1,1,1,4,0,1}
-            ,{4,0,1,0,3,1,0,1,0,1}
-            ,{1,0,1,4,0,1,0,1,0,1}
-            ,{1,0,1,2,5,1,0,1,0,1}
-            ,{1,0,1,4,0,0,5,1,0,1}
-            ,{1,0,3,1,1,1,1,2,0,1}
-            ,{1,4,0,0,0,0,0,0,5,1}
-            ,{1,1,1,1,1,1,1,1,1,1}
+             {0,0,0,0,0,0,0,0,0,0}
+            ,{0,0,0,0,0,0,0,0,0,0}
+            ,{0,0,0,0,0,0,0,0,0,0}
+            ,{0,0,0,0,0,0,0,0,0,0}
+            ,{0,0,0,0,0,0,0,0,0,0}
+            ,{0,0,0,0,0,0,0,0,0,0}
+            ,{0,0,0,0,0,0,0,0,0,0}
+            ,{0,0,0,0,0,0,0,0,0,0}
+            ,{0,0,0,0,0,0,0,0,0,0}
+            ,{0,0,0,0,0,0,0,0,0,0}
     };
+
     public Map_1(int squareSize) {
         this.squareSize = squareSize;
+
+        /* begin temp code (1) */
+        switch (new Random().nextInt(5)) {
+            case 0 :
+                tiles = tiles_1;
+                break;
+
+            case 1 :
+                tiles = tiles_2;
+                break;
+
+            case 2 :
+                tiles = tiles_3;
+                break;
+
+            case 3 :
+                tiles = tiles_4;
+                break;
+
+            case 4 :
+                tiles = tiles_5;
+                break;
+        }
+        /* end of temp code (1) */
+
         init();
     }
-
 
     private void init() {
         // init paints
@@ -56,15 +81,13 @@ public class Map_1 extends Map {
         triangleBottomRight = new TriangleBottomRight(squareSize);
 
         // init Maps
-        map = Bitmap.createBitmap(Const.COLUMN * squareSize, Const.COLUMN * squareSize, Bitmap.Config.RGB_565);
-        Canvas canvas = new Canvas(map);
+        image = Bitmap.createBitmap(Const.COLUMN * squareSize, Const.COLUMN * squareSize, Bitmap.Config.RGB_565);
+        Canvas canvas = new Canvas(image);
         canvas.drawColor(Color.WHITE);
 
         for (int row = 0; row < Const.COLUMN; row++) {
             for (int column = 0; column < Const.COLUMN; column++) {
                 int tileType = tiles[row][column];
-
-                Log.d(TAG, "init: tile [row, column, type] # ["+row+", "+column+", "+tileType+"]");
 
                 switch(tileType) {
                     case 0 :
@@ -93,7 +116,72 @@ public class Map_1 extends Map {
                 }
             }
         }
-
     }
 
+    /* begin temp code (2) */
+    private int[][] tiles_1 = {
+             {1,0,0,0,1,0,0,0,0,0}
+            ,{1,0,0,0,1,0,0,0,0,0}
+            ,{1,0,0,0,1,0,0,0,0,0}
+            ,{2,5,1,1,2,0,0,0,0,0}
+            ,{0,0,0,0,5,1,1,1,2,5}
+            ,{0,0,0,0,1,0,0,0,0,0}
+            ,{0,0,0,0,1,0,0,0,0,0}
+            ,{0,0,0,0,1,0,0,0,0,0}
+            ,{0,0,0,0,1,0,0,0,0,0}
+            ,{0,0,0,0,1,0,0,0,0,0}
+    };
+
+    private int[][] tiles_2 = {
+             {0,0,0,0,0,0,0,1,1,0}
+            ,{0,0,0,0,5,1,0,1,0,1}
+            ,{0,0,0,5,1,1,0,1,1,0}
+            ,{1,1,1,1,1,1,0,1,0,1}
+            ,{1,0,1,0,1,1,0,3,1,1}
+            ,{0,1,0,1,0,1,4,0,3,1}
+            ,{1,0,1,0,1,1,1,4,0,1}
+            ,{0,1,0,1,0,1,1,2,0,1}
+            ,{1,0,1,0,1,1,2,0,0,1}
+            ,{0,1,0,1,0,1,0,0,0,1}
+    };
+
+    private int[][] tiles_3 = {
+             {0,0,1,0,1,0,1,0,1,0}
+            ,{0,0,1,1,0,1,0,1,0,1}
+            ,{0,0,1,0,1,0,1,0,1,0}
+            ,{0,0,1,1,0,1,0,1,0,1}
+            ,{0,0,1,1,1,1,1,1,1,1}
+            ,{0,0,0,0,0,0,0,0,0,0}
+            ,{0,1,1,1,1,0,1,1,1,1}
+            ,{0,0,0,0,1,0,0,0,0,1}
+            ,{0,0,0,0,1,0,0,0,0,1}
+            ,{0,1,1,1,1,0,1,1,1,1}
+    };
+
+    private int[][] tiles_4 = {
+             {0,0,1,1,0,1,0,1,0,1}
+            ,{0,0,1,0,1,0,1,0,1,0}
+            ,{0,1,1,1,0,1,0,1,0,1}
+            ,{0,1,1,0,1,0,1,0,1,0}
+            ,{0,1,0,1,0,1,0,1,0,1}
+            ,{0,1,1,0,1,0,1,0,1,0}
+            ,{0,1,0,1,0,1,1,1,1,1}
+            ,{0,1,1,0,1,1,2,0,3,1}
+            ,{0,1,1,1,1,1,0,1,0,1}
+            ,{4,0,0,0,0,0,5,1,1,1}
+    };
+
+    private int[][] tiles_5 = {
+             {0,0,0,0,0,0,0,1,0,0}
+            ,{0,0,0,0,0,0,0,1,0,0}
+            ,{0,0,0,0,0,0,0,1,4,0}
+            ,{0,0,0,0,0,0,0,3,2,0}
+            ,{0,0,0,0,0,0,5,4,0,0}
+            ,{1,1,1,1,1,1,1,2,0,0}
+            ,{0,0,0,0,0,0,0,5,1,1}
+            ,{0,0,0,0,0,0,0,3,2,0}
+            ,{0,0,0,0,0,0,5,4,0,0}
+            ,{0,0,0,0,0,0,3,1,0,0}
+    };
+    /* end of temp code (2) */
 }

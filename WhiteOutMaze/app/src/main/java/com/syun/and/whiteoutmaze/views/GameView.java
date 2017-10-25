@@ -1,25 +1,28 @@
 package com.syun.and.whiteoutmaze.views;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.syun.and.whiteoutmaze.Const;
 import com.syun.and.whiteoutmaze.R;
 import com.syun.and.whiteoutmaze.common.map.Map;
 import com.syun.and.whiteoutmaze.common.map.Map_1;
-import com.syun.and.whiteoutmaze.util.Logger;
+import com.syun.and.whiteoutmaze.common.unit.Home;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -30,9 +33,9 @@ import java.util.concurrent.Executors;
 public class GameView extends SurfaceView implements SurfaceHolder.Callback2, View.OnTouchListener, Runnable {
     private static final String TAG = GameView.class.getSimpleName();
 
-    private final static int FPS = 1000 / 30;
+    private final static int INTERVAL = 1000 / Const.FPS;
 
-    private Logger mLogger;
+    private Context mContext;
 
     private ExecutorService mExecutor;
 
@@ -41,16 +44,15 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Vi
     private int mSurfaceHeight;
 
     private Map map;
+    private Home home;
 
-    private float catX, catY;
-    private float homeX, homeY;
+    private int catX, catY;
 
-    private Context mContext;
-
-    private int catSize, footprintSize, homeSize;
+    private int catSize, footprintSize;
     private int catSpeed;
 
-    private Bitmap cat, footprint, home;
+    private int steps;
+    private Bitmap cat, footprint, track;
 
     private int squareSize;
     private boolean shouldMove;
@@ -76,18 +78,29 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Vi
     }
 
     /**
-     * 1. handle touch events
-     * 2. update members
+     * here is life cycle.
      *
-     * loop { draw with members }
+     * 1. handle touch events
+     * 2. updates
+     * 3. present
+     *
+     * loop { 1.2.3. }
      */
     public void init() {
-        mLogger = new Logger(TAG);
-
         mExecutor = Executors.newSingleThreadExecutor();
 
         getHolder().addCallback(this);
     }
+
+    /* begin temp code (1)  */
+    private int lifeCount = 3;
+    private ImageView life1, life2, life3;
+    public void setLife(ImageView life1, ImageView life2, ImageView life3) {
+        this.life1 = life1;
+        this.life2 = life2;
+        this.life3 = life3;
+    }
+    /* end of temp code (1) */
 
     @Override
     public void surfaceRedrawNeeded(SurfaceHolder surfaceHolder) {
@@ -96,67 +109,60 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Vi
 
     @Override
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
-        mLogger.print("surfaceCreated: ");
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+        mSurfaceWidth = width;
+        mSurfaceHeight = height;
         squareSize = width / Const.COLUMN;
-
-        mLogger.print("surfaceChanged: [width, height, squareSize] # ["+width+", "+height+", "+squareSize+"]");
 
         initComponents();
 
-        startDrawing(holder, width, height);
+        startDrawing(holder);
     }
-
-    private Paint blackText;
 
     private void initComponents() {
         if(cat == null && home == null) {
-            blackText = new Paint();
-            blackText.setColor(Color.BLACK);
-            blackText.setStyle(Paint.Style.FILL);
-            blackText.setTextSize(squareSize/3);
-
-            // TODO : set factors
+            /* begin temp code (2) */
             catSize = squareSize * 2 / 3;
-            footprintSize = squareSize / 2;
-            catSpeed = squareSize / 16;
-
-            homeSize = squareSize / 1;
+            footprintSize = squareSize / 4;
+            catSpeed = squareSize / 18;
 
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inSampleSize = 2;
+
+            // init cat
             cat = BitmapFactory.decodeResource(getResources(), R.drawable.cat, options);
             cat = Bitmap.createScaledBitmap(cat, catSize, catSize, true);
+
+            catX = 1 * squareSize + squareSize / 2;
+            catY = 1 * squareSize + squareSize / 2;
 
             footprint = BitmapFactory.decodeResource(getResources(), R.drawable.footprint, options);
             footprint = Bitmap.createScaledBitmap(footprint, footprintSize, footprintSize, true);
 
-            home = BitmapFactory.decodeResource(getResources(), R.drawable.home, options);
-            home = Bitmap.createScaledBitmap(home, homeSize, homeSize, true);
+            // init track
+            track = Bitmap.createBitmap(mSurfaceWidth, mSurfaceHeight, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(track);
+            canvas.drawColor(Color.TRANSPARENT);
+            /* end of temp code (2) */
 
-            catX = 0 * squareSize + squareSize / 2;
-            catY = 0 * squareSize + squareSize / 2;
+            // init home
+            home = new Home(mContext, squareSize);
 
-            homeX = 6 * squareSize + squareSize / 2;
-            homeY = 3 * squareSize + squareSize / 2;
-
+            // init map
             map = new Map_1(squareSize);
         }
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
-        mLogger.print("surfaceDestroyed: ");
         stopDrawing();
     }
 
-    public void startDrawing(SurfaceHolder holder, int width, int height) {
+    public void startDrawing(SurfaceHolder holder) {
         this.mSurfaceHolder = holder;
-        this.mSurfaceWidth = width;
-        this.mSurfaceHeight = height;
         setOnTouchListener(this);
 
         if(mExecutor.isShutdown()) {
@@ -178,7 +184,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Vi
     }
 
     private void showKeyBoard(MotionEvent motionEvent) {
-        // TODO : show keyBoard
+        // TODO : show key board
     }
 
     private void update() {
@@ -194,35 +200,19 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Vi
 
             if(isDownArrowKeyPressed)
                 catY = (catY + catSpeed) > mSurfaceHeight ? mSurfaceHeight : (catY + catSpeed);
+
+            /* begin temp code (3) */
+            if(++steps == 10) {
+                addTrack();
+                steps = 0;
+            }
+            /* end of temp code (3) */
         }
     }
 
-    int count = 0;
-    private void present(Canvas canvas) {
-        count++;
-
-        if (count > 100) {
-            canvas.drawColor(Color.WHITE);
-        } else {
-            // draw map
-            canvas.drawBitmap(map.getMap(), new Matrix(), null);
-
-            if(count < 33) {
-                canvas.drawText("3!", 6*squareSize + squareSize/4, 5*squareSize + squareSize/4, blackText);
-            } else if(count < 66) {
-                canvas.drawText("2!", 6*squareSize + squareSize/4, 5*squareSize + squareSize/4, blackText);
-            } else {
-                canvas.drawText("1!", 6*squareSize + squareSize/4, 5*squareSize + squareSize/4, blackText);
-            }
-        }
-
-        // draw footprints
-
-        // draw cat
-        canvas.drawBitmap(cat, catX - cat.getWidth() / 2, catY - cat.getHeight() / 2, null);
-
-        // draw home
-        canvas.drawBitmap(home, homeX - home.getWidth() / 2, homeY - home.getHeight() / 2, null);
+    private void addTrack() {
+        Canvas canvas = new Canvas(track);
+        canvas.drawBitmap(footprint, catX - (footprintSize / 2), catY - (footprintSize / 2), null);
     }
 
     public void setUpArrowKeyPressed(boolean b){
@@ -246,12 +236,11 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Vi
     }
 
     private void shouldMove() {
-        if(count < 100) {
-            return;
-        }
-
         shouldMove = isUpArrowKeyPressed || isLeftArrowKeyPressed || isRightArrowKeyPressed || isDownArrowKeyPressed;
     }
+
+
+    boolean willStart = true;
 
     @Override
     public void run() {
@@ -259,56 +248,314 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Vi
             // update
             update();
 
-            // check validation
-            if(checkValidation()) {
-                Canvas canvas = mSurfaceHolder.lockCanvas();
-                canvas.drawColor(Color.WHITE);
-                canvas.save();
+            // if start
+            if(willStart) {
+                for (int progress = 0; progress < 133; progress++) {
+                    start(progress);
 
-                RectF rectF = new RectF(catX- squareSize*3,catY -squareSize*3,catX +squareSize*3,catY + squareSize*3);
-                Path path = new Path();
-                path.addRoundRect(rectF,squareSize*3,squareSize*3, Path.Direction.CW);
+                    sleep();
+                }
+                willStart = false;
+            }
 
-                canvas.clipPath(path);
-                canvas.drawBitmap(map.getMap(), new Matrix(), null);
-                canvas.restore();
+            // if dead
+            if(willDead()) {
+                switch (lifeCount) {
+                    case 3:
+                        ((Activity)mContext).runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                life1.setImageResource(R.drawable.death);
+                            }
+                        });
+                        break;
 
-                // draw cat
-                canvas.drawBitmap(cat, catX - cat.getWidth() / 2, catY - cat.getHeight() / 2, null);
+                    case 2 :
+                        ((Activity)mContext).runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                life2.setImageResource(R.drawable.death);
+                            }
+                        });
+                        break;
 
-                // draw home
-                canvas.drawBitmap(home, homeX - home.getWidth() / 2, homeY - home.getHeight() / 2, null);
+                    case 1 :
+                        ((Activity)mContext).runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                life3.setImageResource(R.drawable.death);
+                            }
+                        });
+                        break;
+                }
+                lifeCount--;
 
-                canvas.drawText("GG!", 6*squareSize + squareSize/4, 5*squareSize + squareSize/4, blackText);
-                mSurfaceHolder.unlockCanvasAndPost(canvas);
+                for (int progress = 0; progress < 133; progress++) {
+                    dead(progress);
+
+                    sleep();
+                }
+
+                if(lifeCount == 0) {
+                    /* begin temp code (n) */
+                    try {
+                        Thread.sleep(3000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    ((Activity) mContext).finish();
+                    /* end of temp code (n) */
+                }
+
+                catX = 1 * squareSize + squareSize / 2;
+                catY = 1 * squareSize + squareSize / 2;
+                track = Bitmap.createBitmap(mSurfaceWidth, mSurfaceHeight, Bitmap.Config.ARGB_8888);
+                Canvas canvas = new Canvas(track);
+                canvas.drawColor(Color.TRANSPARENT);
+                for (int progress = 0; progress < 67; progress++) {
+                    restart(progress);
+
+                    sleep();
+                }
+            }
+
+            // if goal
+            if(willFinish()) {
+                for (int progress = 0; progress < Const.COLUMN * 2; progress++) {
+                    finish(progress);
+
+                    sleep();
+                }
+                /* begin temp code (n) */
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                ((Activity) mContext).finish();
+                /* end of temp code (n) */
                 break;
             }
 
-            // switch to present
-            Canvas canvas = mSurfaceHolder.lockCanvas();
-            present(canvas);
-            mSurfaceHolder.unlockCanvasAndPost(canvas);
+            // present
+            present();
 
-            try {
-                Thread.sleep(FPS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            // sleep
+            sleep();
         }
     }
 
-    private boolean checkValidation() {
-        int pixel = map.getMap().getPixel((int)catX, (int)catY);
-        if(pixel != Color.WHITE) {
-            return true;
+    private void sleep() {
+        try {
+            Thread.sleep(INTERVAL);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void start(int progress) {
+        Canvas canvas = mSurfaceHolder.lockCanvas();
+
+        // draw map with start anim
+        if(progress > 67) {
+            canvas.drawColor(Color.WHITE);
+            canvas.save();
+
+            float radius = catSize * (133 - progress);
+
+            float left = catX - radius;
+            float top = catY - radius;
+            float right = catX + radius;
+            float bottom = catY + radius;
+
+            RectF rectF = new RectF(left, top, right, bottom);
+            Path path = new Path();
+            path.addRoundRect(rectF, radius, radius, Path.Direction.CW);
+
+            canvas.clipPath(path);
+            canvas.drawBitmap(map.getImage(), new Matrix(), null);
+            canvas.restore();
+        } else  {
+            canvas.drawBitmap(map.getImage(), new Matrix(), null);
         }
 
+        // draw cat
+        drawCat(canvas);
+
+        // draw home
+        drawHome(canvas);
+
+        mSurfaceHolder.unlockCanvasAndPost(canvas);
+    }
+
+    private void restart(int progress) {
+        Canvas canvas = mSurfaceHolder.lockCanvas();
+        canvas.drawColor(Color.WHITE);
+
+        // draw track
+        drawTrack(canvas);
+
+        if(progress < 13) {
+
+        } else if(progress < 26) {
+            // draw cat
+            drawCat(canvas);
+        } else if(progress < 39) {
+
+        } else if(progress < 52) {
+            // draw cat
+            drawCat(canvas);
+        } else {
+
+        }
+        // draw home
+        drawHome(canvas);
+
+        mSurfaceHolder.unlockCanvasAndPost(canvas);
+    }
+
+    private boolean willFinish() {
         double distance = Math.sqrt(
-                Math.pow(homeX - catX, 2)
-                + Math.pow(homeY - catY, 2)
+                Math.pow(home.getPX() - catX, 2)
+                        + Math.pow(home.getPY() - catY, 2)
         );
-
-        return homeSize / 2 > distance;
+        return home.getSize() / 2 > distance;
     }
 
+    private boolean willDead() {
+        int x = catX == map.getImage().getWidth() ? catX - 1 : catX; // to use get pixel
+        int y = catY == map.getImage().getHeight() ? catY - 1 : catY; // to use get pixel
+        int pixel = map.getImage().getPixel(x, y);
+        return pixel == Color.BLACK;
+    }
+
+    private void dead(int progress) {
+        if(progress < 50) {
+            Canvas canvas = mSurfaceHolder.lockCanvas();
+            canvas.drawColor(Color.WHITE);
+
+            canvas.save();
+
+            float radius = catSpeed * progress;
+
+            float left = catX - radius;
+            float top = catY - radius;
+            float right = catX + radius;
+            float bottom = catY + radius;
+
+            RectF rectF = new RectF(left, top, right, bottom);
+            Path path = new Path();
+            path.addRoundRect(rectF, radius, radius, Path.Direction.CW);
+
+            canvas.clipPath(path);
+            canvas.drawBitmap(map.getImage(), new Matrix(), null);
+            canvas.restore();
+
+            // draw track
+            drawTrack(canvas);
+
+            // draw cat
+            drawCat(canvas);
+
+            // draw home
+            drawHome(canvas);
+
+            mSurfaceHolder.unlockCanvasAndPost(canvas);
+        } else if(progress > 83) {
+            Canvas canvas = mSurfaceHolder.lockCanvas();
+            canvas.drawColor(Color.WHITE);
+            canvas.save();
+
+            float radius = catSpeed * (133 - progress);
+
+            float left = catX - radius;
+            float top = catY - radius;
+            float right = catX + radius;
+            float bottom = catY + radius;
+
+            RectF rectF = new RectF(left, top, right, bottom);
+            Path path = new Path();
+            path.addRoundRect(rectF, radius, radius, Path.Direction.CW);
+
+            canvas.clipPath(path);
+            canvas.drawBitmap(map.getImage(), new Matrix(), null);
+            canvas.restore();
+
+            // draw track
+            drawTrack(canvas);
+
+            // draw cat
+            drawCat(canvas);
+
+            // draw home
+            drawHome(canvas);
+
+            mSurfaceHolder.unlockCanvasAndPost(canvas);
+        }
+    }
+
+    private void finish(int progress) {
+        Canvas canvas = mSurfaceHolder.lockCanvas();
+        canvas.drawColor(Color.WHITE);
+
+        canvas.save();
+
+        float radius = squareSize * progress;
+
+        float left = catX - radius;
+        float top = catY - radius;
+        float right = catX + radius;
+        float bottom = catY + radius;
+
+        RectF rectF = new RectF(left, top, right, bottom);
+        Path path = new Path();
+        path.addRoundRect(rectF, radius, radius, Path.Direction.CW);
+
+        canvas.clipPath(path);
+        canvas.drawBitmap(map.getImage(), new Matrix(), null);
+        canvas.restore();
+
+        // draw track
+        drawTrack(canvas);
+
+        // draw cat
+        drawCat(canvas);
+
+        // draw home
+        drawHome(canvas);
+
+        mSurfaceHolder.unlockCanvasAndPost(canvas);
+    }
+
+
+    private void present() {
+        Canvas canvas = mSurfaceHolder.lockCanvas();
+        canvas.drawColor(Color.WHITE);
+
+        // draw track
+        drawTrack(canvas);
+
+        // draw cat
+        drawCat(canvas);
+
+        // draw home
+        drawHome(canvas);
+
+        mSurfaceHolder.unlockCanvasAndPost(canvas);
+    }
+
+    private void drawTrack(Canvas canvas) {
+        canvas.drawBitmap(track, new Matrix(), null);
+    }
+
+    private void drawCat(Canvas canvas) {
+        canvas.drawBitmap(cat, catX - cat.getWidth() / 2, catY - cat.getHeight() / 2, null);
+    }
+
+    private void drawHome(Canvas canvas) {
+        canvas.drawBitmap(home.getImage(),
+                home.getPX() - home.getSize() / 2,
+                home.getPY() - home.getSize() / 2,
+                null);
+    }
 }

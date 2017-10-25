@@ -21,12 +21,12 @@ public class Map {
     protected TriangleBottomLeft triangleBottomLeft;
     protected TriangleBottomRight triangleBottomRight;
 
-    protected Bitmap map;
+    protected Bitmap image;
 
     protected Paint blackPaint;
     protected Paint whitePaint;
 
-    public Bitmap getMap() {
-        return map;
+    public Bitmap getImage() {
+        return image;
     }
 }
