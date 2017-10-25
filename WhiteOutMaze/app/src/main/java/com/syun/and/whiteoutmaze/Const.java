@@ -5,5 +5,7 @@ package com.syun.and.whiteoutmaze;
  */
 
 public class Const {
+    public static final int FPS = 40;
+
     public static final int COLUMN = 10;
 }

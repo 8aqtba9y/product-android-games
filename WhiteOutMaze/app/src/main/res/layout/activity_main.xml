@@ -24,32 +24,33 @@
         android:layout_marginEnd="0dp"
         android:layout_marginStart="0dp" />
 
-    <TextView
-        android:id="@+id/stageTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        app:layout_constraintLeft_toLeftOf="parent"
+    <ImageView
+        android:id="@+id/stageImageView"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        app:layout_constraintTop_toBottomOf="@+id/gameView" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/gameView"
+        app:srcCompat="@drawable/stage_1" />
 
     <ImageView
         android:id="@+id/upArrowKeyImageView"
         android:layout_width="@dimen/size_arrow_key"
         android:layout_height="@dimen/size_arrow_key"
-        android:src="@mipmap/ic_launcher"
+        android:src="@drawable/up"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/stageTextView"
-        android:layout_marginTop="8dp" />
+        app:layout_constraintTop_toBottomOf="@+id/gameView"
+        android:layout_marginTop="32dp" />
 
     <ImageView
         android:id="@+id/leftArrowKeyImageView"
         android:layout_width="@dimen/size_arrow_key"
         android:layout_height="@dimen/size_arrow_key"
-        android:layout_marginEnd="16dp"
-        android:layout_marginTop="16dp"
-        android:src="@mipmap/ic_launcher"
+        android:layout_marginEnd="8dp"
+        android:layout_marginTop="8dp"
+        android:src="@drawable/left"
         app:layout_constraintEnd_toStartOf="@+id/upArrowKeyImageView"
         app:layout_constraintTop_toBottomOf="@+id/upArrowKeyImageView" />
 
@@ -57,21 +58,53 @@
         android:id="@+id/rightArrowKeyImageView"
         android:layout_width="@dimen/size_arrow_key"
         android:layout_height="@dimen/size_arrow_key"
-        android:src="@mipmap/ic_launcher"
-        android:layout_marginTop="16dp"
+        android:src="@drawable/right"
+        android:layout_marginTop="8dp"
         app:layout_constraintTop_toBottomOf="@+id/upArrowKeyImageView"
         app:layout_constraintStart_toEndOf="@+id/upArrowKeyImageView"
-        android:layout_marginStart="16dp" />
+        android:layout_marginStart="8dp" />
 
     <ImageView
         android:id="@+id/downArrowKeyImageView"
         android:layout_width="@dimen/size_arrow_key"
         android:layout_height="@dimen/size_arrow_key"
-        android:src="@mipmap/ic_launcher"
+        android:src="@drawable/down"
         app:layout_constraintRight_toRightOf="parent"
         android:layout_marginTop="8dp"
         app:layout_constraintTop_toBottomOf="@+id/leftArrowKeyImageView"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginStart="0dp" />
+
+    <ImageView
+        android:id="@+id/life1ImageView"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/gameView"
+        app:srcCompat="@drawable/life" />
+
+    <ImageView
+        android:id="@+id/life2ImageView"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginTop="0dp"
+        app:layout_constraintEnd_toStartOf="@+id/life1ImageView"
+        app:layout_constraintTop_toTopOf="@+id/life1ImageView"
+        app:srcCompat="@drawable/life" />
+
+    <ImageView
+        android:id="@+id/life3ImageView"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginTop="0dp"
+        app:layout_constraintEnd_toStartOf="@+id/life2ImageView"
+        app:layout_constraintTop_toTopOf="@+id/life2ImageView"
+        app:srcCompat="@drawable/life" />
+
 
 </android.support.constraint.ConstraintLayout>

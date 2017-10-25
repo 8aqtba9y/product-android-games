@@ -2,16 +2,18 @@ package com.syun.and.whiteoutmaze.activites;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
 
 import com.syun.and.whiteoutmaze.R;
+import com.syun.and.whiteoutmaze.fragments.SettingFragment;
 
 public class TopActivity extends BaseActivity implements View.OnClickListener{
 
     private Button mSettingButton;
-    private Button mStartButton;
+    private Button mStage1Button;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,20 +22,34 @@ public class TopActivity extends BaseActivity implements View.OnClickListener{
 
         mSettingButton = findViewById(R.id.settingButton);
         mSettingButton.setOnClickListener(this);
-        mStartButton = findViewById(R.id.startButton);
-        mStartButton.setOnClickListener(this);
+        mStage1Button = findViewById(R.id.startButton);
+        mStage1Button.setOnClickListener(this);
     }
 
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.settingButton :
-                Toast.makeText(this, "Not Implemented!", Toast.LENGTH_SHORT).show();
+                handleSettingFragment();
                 break;
 
             case R.id.startButton :
                 startActivity(new Intent(this, MainActivity.class));
                 break;
+        }
+    }
+
+    private void handleSettingFragment() {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        Fragment fragment = fragmentManager.findFragmentByTag(SettingFragment.TAG);
+        if(fragment != null) {
+            if(fragment.isVisible()) {
+                fragmentManager.beginTransaction().hide(fragment).commit();
+            } else {
+                fragmentManager.beginTransaction().show(fragment).commit();
+            }
+        } else {
+            fragmentManager.beginTransaction().add(R.id.container, new SettingFragment(), SettingFragment.TAG).commit();
         }
     }
 
