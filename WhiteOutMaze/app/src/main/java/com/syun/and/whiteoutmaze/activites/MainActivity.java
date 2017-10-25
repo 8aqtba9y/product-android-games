@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.syun.and.whiteoutmaze.R;
 import com.syun.and.whiteoutmaze.views.GameView;
@@ -14,20 +13,23 @@ public class MainActivity extends BaseActivity implements View.OnTouchListener{
 
     private GameView mGameView;
 
-    private TextView mStageTextView;
+    private ImageView life1, life2, life3;
+    private ImageView mStageImageView;
     private ImageView mUpArrowKey, mLeftArrowKey, mRightArrowKey, mDownArrowKey;
 
 //    private MediaPlayer bgm;
 
-    /*
-        here is life cycle.
-
-        1. onResume:
-        2. surfaceCreated:
-        3. surfaceChanged:
-
-        4. onPause:
-        5. surfaceDestroyed:
+    /**
+     * here is life cycle.
+     *
+     * 1. onResume:
+     * 2. surfaceCreated:
+     * 3. surfaceChanged:
+     *
+     * 4. onPause:
+     * 5. surfaceDestroyed:
+     *
+     * loop { 1.2.3. 4.5.}
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,8 +45,14 @@ public class MainActivity extends BaseActivity implements View.OnTouchListener{
         mGameView = findViewById(R.id.gameView);
         mGameView.init();
 
-        mStageTextView = findViewById(R.id.stageTextView);
-        mStageTextView.setText("Stage 1");
+        mStageImageView = findViewById(R.id.stageImageView);
+        mStageImageView.setImageResource(R.drawable.stage_1);
+
+        life1 = findViewById(R.id.life1ImageView);
+        life2 = findViewById(R.id.life2ImageView);
+        life3 = findViewById(R.id.life3ImageView);
+
+        mGameView.setLife(life1, life2, life3);
 
         mUpArrowKey = findViewById(R.id.upArrowKeyImageView);
         mUpArrowKey.setOnTouchListener(this);
