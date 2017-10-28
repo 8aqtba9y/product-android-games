@@ -40,6 +40,7 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
 
     private int g;
 
+    private Map map;
     private Plumber plumber;
 
     public GameView(Context context) {
@@ -102,7 +103,10 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
 
 
     private void initComponents() {
-        if(plumber == null) {
+        if(plumber == null && map == null) {
+
+            // init map
+            map = new Map(mContext, mSurfaceWidth, mSurfaceHeight, mSquareWidth, mSquareHeight);
 
             // init plumber
             plumber = new Plumber(mContext, mSurfaceWidth, mSurfaceHeight, mSquareWidth, mSquareHeight);
@@ -194,7 +198,7 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
 
     private void drawMap(Canvas canvas) {
         canvas.drawColor(Color.WHITE);
-//        canvas.drawBitmap(map.image, new Matrix(), null);
+        canvas.drawBitmap(map.getImage(), new Matrix(), null);
     }
 
     private void drawPlumber(Canvas canvas) {
