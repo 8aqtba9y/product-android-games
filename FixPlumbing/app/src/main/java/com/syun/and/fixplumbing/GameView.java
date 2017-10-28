@@ -38,6 +38,8 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
     private int mSquareWidth;
     private int mSquareHeight;
 
+    private int g;
+
     private Plumber plumber;
 
     public GameView(Context context) {
@@ -89,7 +91,10 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
         mSurfaceHeight = height;
         mSquareWidth = mSurfaceWidth / Const.COLUMN;
         mSquareHeight = mSurfaceHeight / Const.ROW;
+        g = mSquareHeight / 4;
 
+        Log.d(TAG, "surfaceChanged: surface [width, height] # ["+mSurfaceWidth + ", "+mSurfaceHeight+"]");
+        Log.d(TAG, "surfaceChanged: square [width, height] # ["+mSquareWidth+ ", "+mSquareHeight+"]");
         initComponents();
 
         startDrawing(holder);
@@ -100,7 +105,7 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
         if(plumber == null) {
 
             // init plumber
-            plumber = new Plumber(mContext, mSquareWidth, mSquareHeight);
+            plumber = new Plumber(mContext, mSurfaceWidth, mSurfaceHeight, mSquareWidth, mSquareHeight);
         }
     }
 
@@ -144,15 +149,28 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
     }
 
     private void update() {
+        // TODO : update
+
         updatePlumberPosition();
     }
 
+    private int vy;
+    private int t = 0;
     private void updatePlumberPosition() {
-        if(yaw != 0) { // && should jump
-            plumber.setPX(
-                    plumber.getPX() + yaw
+        if(vx != 0) { // && should jump
+            plumber.setPX (
+                    plumber.getPX() + vx
             );
         }
+
+        t = ++t > 10 ? 10 : t;
+
+        vy = g / 2 * t;
+        plumber.setPY(
+                plumber.getPY() + vy
+        );
+
+        Log.d(TAG, "updatePlumberPosition: v [x, y] # ["+vx+", "+vy+"]");
     }
 
     private void sleep() {
@@ -181,12 +199,14 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
 
     private void drawPlumber(Canvas canvas) {
         canvas.drawBitmap(plumber.getImage(), plumber.getPX(), plumber.getPY(), null);
+        Log.d(TAG, "drawPlumber: p [x, y] # ["+plumber.getPX()+", "+plumber.getPY()+"]");
     }
 
     public void update(MotionEvent motionEvent) {
         switch (motionEvent.getAction()) {
             case MotionEvent.ACTION_DOWN :
                 // TODO : begin jump()
+                jump();
                 break;
 
             case MotionEvent.ACTION_UP :
@@ -195,18 +215,17 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
         }
     }
 
-    private int yaw;
-    public void update(SensorEvent sensorEvent) {
-        // 数値の単位はm/s^2
-        // X軸
-        float x = sensorEvent.values[0];
-        // Y軸
-        float y = sensorEvent.values[1];
-        // Z軸
-        float z = sensorEvent.values[2];
-        // Logに出力
-        Log.d(TAG, "update: sensorEvent [x, y, z] # ["+x+", "+y+", "+z+"]");
+    private void jump() {
+        // TODO : canJump : boolean
+        t = -10;
+    }
 
-        yaw = (int) y;
+    private int vx;
+
+    /**
+     * @param sensorEvent : https://developer.android.com/reference/android/hardware/SensorEvent.html
+     */
+    public void update(SensorEvent sensorEvent) {
+        vx = (int) (-sensorEvent.values[0] * plumber.getXSpeed());
     }
 }
