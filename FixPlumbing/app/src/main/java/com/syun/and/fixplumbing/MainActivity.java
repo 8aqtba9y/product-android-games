@@ -13,7 +13,7 @@ import android.view.View;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 
-public class MainActivity extends AppCompatActivity implements View.OnTouchListener, SensorEventListener {
+public class MainActivity extends AppCompatActivity implements OnGameEventListener, View.OnTouchListener, SensorEventListener {
     private static final String TAG = MainActivity.class.getSimpleName();
 
     private GameView mGameView;
@@ -31,13 +31,14 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
         setContentView(R.layout.activity_main);
 
+        findViewById(R.id.mainView)
+                .setSystemUiVisibility(
+                        View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                );
+
         mGameView = findViewById(R.id.gameView);
-        mGameView.init(new OnGameEventListener() {
-            @Override
-            public void onEvent(String msg) {
-                Log.d(TAG, "onEvent: msg # "+msg);
-            }
-        });
+        mGameView.init(this);
 
         // センサーマネージャを獲得する
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -46,16 +47,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         mAccelerometerSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-        // 200msに一度SensorEventを観測するリスナを登録
-        mSensorManager.registerListener(this, mAccelerometerSensor, SensorManager.SENSOR_DELAY_NORMAL);
-
-        // Touch時にTouchEventを取得するリスなを登録
-        mGameView.setOnTouchListener(this);
-    }
 
     @Override
     protected void onPause() {
@@ -84,6 +75,23 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
+
+    }
+
+    @Override
+    public void onEvent(String msg) {
+        switch (msg) {
+            case OnGameEventListener.CREATE :
+                // 200msに一度SensorEventを観測するリスナを登録
+                mSensorManager.registerListener(this, mAccelerometerSensor, SensorManager.SENSOR_DELAY_NORMAL);
+                // Touch時にTouchEventを取得するリスなを登録
+                mGameView.setOnTouchListener(this);
+                break;
+
+            case OnGameEventListener.DESTROY :
+                // 何もしない
+                break;
+        }
 
     }
 }

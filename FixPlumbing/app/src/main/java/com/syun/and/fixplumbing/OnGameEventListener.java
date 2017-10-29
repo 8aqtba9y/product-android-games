@@ -7,5 +7,11 @@ package com.syun.and.fixplumbing;
 public interface OnGameEventListener {
     void onEvent(String msg);
 
+    String CREATE = "create";
+    String DESTROY = "destroy";
+
+    String READY = "ready";
+    String START = "start";
+    String CLEAR = "clear";
     String DEAD = "dead";
 }

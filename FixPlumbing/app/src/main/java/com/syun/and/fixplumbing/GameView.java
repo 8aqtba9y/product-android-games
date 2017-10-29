@@ -38,7 +38,7 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
     private int mSquareWidth;
     private int mSquareHeight;
 
-    private int g;
+    private float g; // gravity factor
 
     private Map map;
     private Plumber plumber;
@@ -92,10 +92,12 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
         mSurfaceHeight = height;
         mSquareWidth = mSurfaceWidth / Const.COLUMN;
         mSquareHeight = mSurfaceHeight / Const.ROW;
-        g = mSquareHeight / 4;
+        g = mSquareHeight / 4f;
 
         Log.d(TAG, "surfaceChanged: surface [width, height] # ["+mSurfaceWidth + ", "+mSurfaceHeight+"]");
         Log.d(TAG, "surfaceChanged: square [width, height] # ["+mSquareWidth+ ", "+mSquareHeight+"]");
+        Log.d(TAG, "surfaceChanged: g # "+g);
+
         initComponents();
 
         startDrawing(holder);
@@ -126,6 +128,8 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
             mExecutor = Executors.newSingleThreadExecutor();
         }
         mExecutor.submit(this);
+
+        sendEvent(OnGameEventListener.CREATE);
     }
 
 
@@ -133,10 +137,8 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
         if(!mExecutor.isShutdown()) {
             mExecutor.shutdownNow();
         }
-    }
 
-    private void dead() {
-        mListener.onEvent(OnGameEventListener.DEAD);
+        sendEvent(OnGameEventListener.DESTROY);
     }
 
     @Override
@@ -169,7 +171,7 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
 
         t = ++t > 10 ? 10 : t;
 
-        vy = g / 2 * t;
+        vy = (int) (g / 2 * t);
         plumber.setPY(
                 plumber.getPY() + vy
         );
@@ -231,5 +233,9 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
      */
     public void update(SensorEvent sensorEvent) {
         vx = (int) (-sensorEvent.values[0] * plumber.getXSpeed());
+    }
+
+    private void sendEvent(String msg) {
+        mListener.onEvent(msg);
     }
 }
