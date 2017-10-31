@@ -1,4 +1,4 @@
-package com.syun.and.fixplumbing;
+package com.syun.and.fixplumbing.common;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -7,6 +7,12 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.util.Log;
+
+import com.syun.and.fixplumbing.Const;
+import com.syun.and.fixplumbing.R;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by qijsb on 2017/10/29.
@@ -29,6 +35,8 @@ public class Map {
     private int width;
     private int height;
 
+    private List<Brick> brickList = new ArrayList<>();
+
     public Map(Context context, int surfaceWidth, int surfaceHeight, int squareWidth, int squareHeight) {
         this.mContext = context;
         this.surfaceWidth = surfaceWidth;
@@ -44,7 +52,7 @@ public class Map {
 
     private void init() {
         width = surfaceWidth;
-        height = squareHeight * Const.ROW;
+        height = surfaceHeight;
 
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inSampleSize = 2;
@@ -60,8 +68,8 @@ public class Map {
 
 //        rect = new Rect();
 
-        for (int column = 0; column < Const.COLUMN; column++) {
-            for (int row = 0; row < Const.ROW; row++) {
+        for (int row = 0; row < Const.ROW; row++) {
+            for (int column = 0; column < Const.COLUMN; column++) {
 //                rect.setEmpty();
 //
 //                rect.left = squareWidth * column;
@@ -69,7 +77,17 @@ public class Map {
 //                rect.right = squareWidth * (column + 1);
 //                rect.bottom = squareHeight * (row + 1);
 
-                canvas.drawBitmap(brick, squareWidth*column, squareHeight*row, null);
+                int tileType = tiles[row][column];
+                switch (tileType) {
+                    case 0 :
+                        // do nothing.
+                        break;
+
+                    case 1 :
+                        brickList.add(new Brick(squareWidth, squareHeight, row, column));
+                        canvas.drawBitmap(brick, squareWidth * column, squareHeight * row, null);
+                        break;
+                }
             }
         }
     }
@@ -77,4 +95,27 @@ public class Map {
     public Bitmap getImage(){
         return image;
     }
+
+    public List<Brick> getBrickList() {
+        return brickList;
+    }
+
+    private int[][] tiles = {
+             {0,0,0,0,0,0,0,0,0}
+            ,{1,0,0,0,0,0,0,0,0}
+            ,{1,0,0,0,0,0,0,0,0}
+            ,{1,0,0,0,1,0,0,0,0}
+            ,{1,0,0,0,1,0,0,0,0}
+            ,{1,1,1,1,1,0,0,0,1}
+            ,{0,0,0,0,0,0,0,0,1}
+            ,{0,0,0,0,0,0,0,0,1}
+            ,{0,1,1,1,1,1,0,0,1}
+            ,{0,0,0,0,0,0,1,0,1}
+            ,{1,0,0,0,0,0,1,0,1}
+            ,{1,0,0,0,0,0,1,1,0}
+            ,{1,1,1,1,0,0,0,1,0}
+            ,{0,0,0,1,0,0,0,0,1}
+            ,{0,1,0,0,0,1,0,0,1}
+            ,{0,0,1,1,1,1,1,1,1}
+    };
 }

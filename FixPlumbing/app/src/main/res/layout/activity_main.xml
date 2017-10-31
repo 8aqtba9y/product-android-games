@@ -4,10 +4,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.syun.and.fixplumbing.MainActivity"
+    tools:context="com.syun.and.fixplumbing.activity.MainActivity"
     android:id="@+id/mainView">
 
-    <com.syun.and.fixplumbing.GameView
+    <com.syun.and.fixplumbing.views.GameView
         android:id="@+id/gameView"
         android:layout_width="0dp"
         android:layout_height="0dp"

@@ -1,4 +1,4 @@
-package com.syun.and.fixplumbing;
+package com.syun.and.fixplumbing.activity;
 
 import android.content.Context;
 import android.hardware.Sensor;
@@ -7,11 +7,14 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
+import com.syun.and.fixplumbing.views.GameView;
+import com.syun.and.fixplumbing.listener.OnGameEventListener;
+import com.syun.and.fixplumbing.R;
 
 public class MainActivity extends AppCompatActivity implements OnGameEventListener, View.OnTouchListener, SensorEventListener {
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -31,11 +34,10 @@ public class MainActivity extends AppCompatActivity implements OnGameEventListen
 
         setContentView(R.layout.activity_main);
 
-        findViewById(R.id.mainView)
-                .setSystemUiVisibility(
-                        View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                );
+        getWindow().setFlags(
+                WindowManager.LayoutParams.FLAG_FULLSCREEN
+                , WindowManager.LayoutParams.FLAG_FULLSCREEN
+        );
 
         mGameView = findViewById(R.id.gameView);
         mGameView.init(this);
@@ -45,18 +47,6 @@ public class MainActivity extends AppCompatActivity implements OnGameEventListen
 
         // マネージャから加速度センサーオブジェクトを取得
         mAccelerometerSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-    }
-
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-
-        // 非アクティブ時にSensorEventをとらないようにリスナの登録解除
-        mSensorManager.unregisterListener(this);
-
-        // 非アクティブ時にTouchEventを取らないようにリスなの登録解除
-        mGameView.setOnTouchListener(null);
     }
 
     @Override
@@ -89,7 +79,10 @@ public class MainActivity extends AppCompatActivity implements OnGameEventListen
                 break;
 
             case OnGameEventListener.DESTROY :
-                // 何もしない
+                // 非アクティブ時にSensorEventをとらないようにリスナの登録解除
+                mSensorManager.unregisterListener(this);
+                // 非アクティブ時にTouchEventを取らないようにリスなの登録解除
+                mGameView.setOnTouchListener(null);
                 break;
         }
 
