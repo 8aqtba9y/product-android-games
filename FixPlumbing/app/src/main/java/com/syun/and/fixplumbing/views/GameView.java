@@ -13,6 +13,8 @@ import android.view.SurfaceView;
 
 import com.syun.and.fixplumbing.Const;
 import com.syun.and.fixplumbing.common.Brick;
+import com.syun.and.fixplumbing.common.Drop;
+import com.syun.and.fixplumbing.common.Drops;
 import com.syun.and.fixplumbing.listener.OnGameEventListener;
 import com.syun.and.fixplumbing.common.Map;
 import com.syun.and.fixplumbing.common.Plumber;
@@ -46,6 +48,7 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
 
     private Map map;
     private Plumber plumber;
+    private Drops drops;
 
     public GameView(Context context) {
         super(context);
@@ -115,6 +118,9 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
 
             // init plumber
             plumber = new Plumber(mContext, mSurfaceWidth, mSurfaceHeight, mSquareWidth, mSquareHeight);
+
+            // init drops
+            drops = new Drops(mContext, mSurfaceWidth, mSurfaceHeight, mSquareWidth, mSquareHeight);
         }
     }
 
@@ -157,10 +163,23 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
         }
     }
 
-    private void update() {
 
-        // TODO : update
+    private void update() {
+        // drop
+        updateDropsPosition();
+
+        // plumber
         updatePlumberPosition();
+    }
+
+    private void updateDropsPosition() {
+        drops.addDrop();
+
+        for (Drop drop : drops.getDrops()) {
+            drop.setPY( drop.getPY() + drop.getVY());
+        }
+
+        drops.recycleDrops();
     }
 
     List<Brick> bricks = new ArrayList<>();
@@ -194,14 +213,19 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
 //            Log.d(TAG, "updatePlumberPosition: brick [left, right], plumber [left, right] # ["+brick.getLeft()+", "+brick.getRight()+"], ["+plumber.getLeft()+", "+plumber.getRight()+"]");
 //            Log.d(TAG, "updatePlumberPosition: brick [top, bottom], plumber [top, bttom] # ["+brick.getTop()+", "+brick.getBottom()+"], ["+plumber.getTop()+", "+plumber.getBottom()+"]");
 
-            if( (tempPlumberRow - brickRow == 0 || tempPlumberRow - brickRow == -1)
-                    && (tempPlumberColumn - brickColumn == 0 || tempPlumberColumn - brickColumn == -1) ) {
-                // check bricks
+            // TODO : too buggy
+            if(tempPlumberRow - brickRow == -1
+                    && (tempPlumberColumn - brickColumn == 0 || tempPlumberColumn - brickColumn == -1)
+                    && plumber.getTempPY() + plumber.getHeight() >= brick.getTop()) {
 
+                        plumber.setTempPY( brick.getTop() - plumber.getHeight() );
+                        plumber.setVT(0);
             }
         }
 
 //        Log.d(TAG, "updatePlumberPosition: bricks Size # "+bricks.size());
+
+        // TODO : check drops
 
         // confirm plumber's position
         plumber.confirmPosition();
@@ -223,7 +247,16 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
         // draw plumber
         drawPlumber(canvas);
 
+        // draw drops
+        drawDrops(canvas);
+
         mSurfaceHolder.unlockCanvasAndPost(canvas);
+    }
+
+    private void drawDrops(Canvas canvas) {
+        for(Drop drop : drops.getDrops()) {
+            canvas.drawBitmap(drop.getImage(), drop.getPX(), drop.getPY(), null);
+        }
     }
 
     private void drawMap(Canvas canvas) {
