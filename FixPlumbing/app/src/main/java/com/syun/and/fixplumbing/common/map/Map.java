@@ -1,15 +1,15 @@
-package com.syun.and.fixplumbing.common;
+package com.syun.and.fixplumbing.common.map;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Rect;
-import android.util.Log;
+import android.graphics.Matrix;
 
 import com.syun.and.fixplumbing.Const;
 import com.syun.and.fixplumbing.R;
+import com.syun.and.fixplumbing.common.unit.Brick;
+import com.syun.and.fixplumbing.common.unit.Plumbing;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +17,6 @@ import java.util.List;
 /**
  * Created by qijsb on 2017/10/29.
  */
-
 public class Map {
     private static final String TAG = Map.class.getSimpleName();
 
@@ -36,6 +35,7 @@ public class Map {
     private int height;
 
     private List<Brick> brickList = new ArrayList<>();
+    private List<Plumbing> plumbingList = new ArrayList<>();
 
     public Map(Context context, int surfaceWidth, int surfaceHeight, int squareWidth, int squareHeight) {
         this.mContext = context;
@@ -46,9 +46,6 @@ public class Map {
         init();
     }
 
-    private Bitmap brick;
-
-    private Rect rect;
 
     private void init() {
         width = surfaceWidth;
@@ -57,25 +54,15 @@ public class Map {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inSampleSize = 2;
 
-        brick = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.brick, options);
-        brick = Bitmap.createScaledBitmap(brick, squareWidth, squareHeight, true);
+        Bitmap background = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.background, options);
+        background = Bitmap.createScaledBitmap(background, surfaceWidth, surfaceHeight, true);
 
         image = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
         Canvas canvas = new Canvas(image);
-        canvas.drawColor(Color.WHITE);
-
-        Log.d(TAG, "init: image [width, height] # ["+image.getWidth()+", "+image.getHeight()+"]");
-
-//        rect = new Rect();
+        canvas.drawBitmap(background, new Matrix(), null);
 
         for (int row = 0; row < Const.ROW; row++) {
             for (int column = 0; column < Const.COLUMN; column++) {
-//                rect.setEmpty();
-//
-//                rect.left = squareWidth * column;
-//                rect.top = squareHeight * row;
-//                rect.right = squareWidth * (column + 1);
-//                rect.bottom = squareHeight * (row + 1);
 
                 int tileType = tiles[row][column];
                 switch (tileType) {
@@ -84,8 +71,14 @@ public class Map {
                         break;
 
                     case 1 :
-                        brickList.add(new Brick(squareWidth, squareHeight, row, column));
-                        canvas.drawBitmap(brick, squareWidth * column, squareHeight * row, null);
+                        Brick brick = new Brick(mContext, squareWidth, squareHeight, row, column);
+                        canvas.drawBitmap(brick.getImage(), brick.getPX(), brick.getPY(), null);
+                        brickList.add(brick);
+                        break;
+
+                    case 2 :
+                        Plumbing plumbing = new Plumbing(mContext, squareWidth, squareHeight, row, column);
+                        plumbingList.add(plumbing);
                         break;
                 }
             }
@@ -100,22 +93,27 @@ public class Map {
         return brickList;
     }
 
+    public List<Plumbing> getPlumbingList() {
+        return plumbingList;
+    }
+
     private int[][] tiles = {
-             {0,0,0,0,0,0,0,0,0}
-            ,{1,0,0,0,0,0,0,0,0}
-            ,{1,0,0,0,0,0,0,0,0}
-            ,{1,0,0,0,1,0,0,0,0}
-            ,{1,0,0,0,1,0,0,0,0}
-            ,{1,1,1,1,1,0,0,0,1}
+             {0,0,0,0,0,2,0,0,0}
+            ,{0,0,0,0,0,1,1,0,0}
+            ,{0,0,0,0,0,0,0,0,0}
+            ,{0,0,0,0,0,0,0,0,0}
+            ,{0,1,1,0,0,0,0,0,0}
+            ,{0,0,0,0,0,0,1,1,0}
+            ,{0,0,0,0,0,0,0,0,0}
+            ,{0,0,0,0,0,0,0,0,0}
+            ,{0,0,1,1,0,0,0,0,2}
             ,{0,0,0,0,0,0,0,0,1}
-            ,{0,0,0,0,0,0,0,0,1}
-            ,{0,1,1,1,1,1,0,0,1}
-            ,{0,0,0,0,0,0,1,0,1}
-            ,{1,0,0,0,0,0,1,0,1}
-            ,{1,0,0,0,0,0,1,1,0}
-            ,{1,1,1,1,0,0,0,1,0}
-            ,{0,0,0,1,0,0,0,0,1}
-            ,{0,1,0,0,0,1,0,0,1}
-            ,{0,0,1,1,1,1,1,1,1}
+            ,{1,0,0,0,0,0,0,0,0}
+            ,{0,0,2,0,0,0,0,0,0}
+            ,{0,0,1,1,0,0,0,0,0}
+            ,{0,0,0,0,0,0,1,1,0}
+            ,{0,0,0,0,0,0,0,0,0}
+            ,{0,0,0,0,0,0,0,0,0}
     };
+
 }

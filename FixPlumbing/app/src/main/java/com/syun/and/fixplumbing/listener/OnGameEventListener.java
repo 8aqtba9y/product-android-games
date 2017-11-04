@@ -10,6 +10,8 @@ public interface OnGameEventListener {
     String CREATE = "create";
     String DESTROY = "destroy";
 
+    String COUNT_DOWN = "count_down";
+
     String READY = "ready";
     String START = "start";
     String CLEAR = "clear";
