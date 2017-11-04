@@ -1,4 +1,4 @@
-package com.syun.and.fixplumbing.common;
+package com.syun.and.fixplumbing.common.unit;
 
 import android.content.Context;
 
@@ -10,8 +10,7 @@ import java.util.Random;
  * Created by qijsb on 2017/11/02.
  */
 
-public class Drops {
-    private Context mContext;
+public class Drops extends BaseUnit {
     private int surfaceWidth;
     private int surfaceHeight;
     private int squareWidth;
@@ -48,9 +47,26 @@ public class Drops {
         }
     }
 
-    public void recycleDrops() {
+    public void recycleDrops(int wavePY, Plumber plumber) {
+        int plumberCX = plumber.getCX();
+        int plumberCY = plumber.getCY();
+
         for (Drop drop : drops) {
-            if(drop.getPY() > surfaceHeight) {
+            int dropCX = drop.getPX() + drop.getWidth() / 2;
+            int dropCY = drop.getPY() + drop.getHeight() / 2;
+
+            int distance = (int) Math.sqrt(
+                    Math.pow(plumberCX - dropCX, 2)
+                    + Math.pow(plumberCY - dropCY, 2)
+            );
+
+            if(distance < squareWidth / 2){
+                plumber.incrementWetGauge();
+                tempDrops.add(drop);
+                continue;
+            }
+
+            if(drop.getPY() > wavePY) {
                 tempDrops.add(drop);
             }
         }

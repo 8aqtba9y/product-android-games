@@ -12,22 +12,21 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import com.syun.and.fixplumbing.Const;
-import com.syun.and.fixplumbing.common.Brick;
-import com.syun.and.fixplumbing.common.Drop;
-import com.syun.and.fixplumbing.common.Drops;
+import com.syun.and.fixplumbing.common.unit.Brick;
+import com.syun.and.fixplumbing.common.unit.Drop;
+import com.syun.and.fixplumbing.common.unit.Drops;
+import com.syun.and.fixplumbing.common.unit.Plumbing;
+import com.syun.and.fixplumbing.common.unit.Wave;
 import com.syun.and.fixplumbing.listener.OnGameEventListener;
-import com.syun.and.fixplumbing.common.Map;
-import com.syun.and.fixplumbing.common.Plumber;
+import com.syun.and.fixplumbing.common.map.Map;
+import com.syun.and.fixplumbing.common.unit.Plumber;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
  * Created by qijsb on 2017/10/28.
  */
-
 public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, Runnable {
     private static final String TAG = GameView.class.getSimpleName();
 
@@ -49,6 +48,7 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
     private Map map;
     private Plumber plumber;
     private Drops drops;
+    private Wave wave;
 
     public GameView(Context context) {
         super(context);
@@ -121,6 +121,9 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
 
             // init drops
             drops = new Drops(mContext, mSurfaceWidth, mSurfaceHeight, mSquareWidth, mSquareHeight);
+
+            // init wave
+            wave = new Wave(mContext, mSurfaceWidth, mSurfaceHeight, mSquareWidth, mSquareHeight);
         }
     }
 
@@ -153,6 +156,7 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
     @Override
     public void run() {
         while(!mExecutor.isShutdown()) {
+            // update Units
             update();
 
             // present
@@ -163,27 +167,72 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
         }
     }
 
-
     private void update() {
         // drop
-        updateDropsPosition();
+        updateDropPosition();
 
         // plumber
         updatePlumberPosition();
+
+        // plumbing
+        updatePlumbingGauge();
+
+        // wave
+        updateWavePosition();
     }
 
-    private void updateDropsPosition() {
-        drops.addDrop();
+    private void updateWavePosition() {
+        wave.incrementPY();
+        if(wave.getPY() < 0) {
+            endGame(OnGameEventListener.DEAD);
+        }
+        wave.incrementPX();
+    }
 
+    private void updatePlumbingGauge() {
+        int tempPlumberRow = plumber.getTempRow();
+        int tempPlumberColumn = plumber.getTempColumn();
+
+        for(Plumbing plumbing : map.getPlumbingList()) {
+            int plumbingRow = plumbing.getRow();
+            int plumbingColumn = plumbing.getColumn();
+
+            if(plumbingRow - tempPlumberRow == 0
+                    && plumbingColumn - tempPlumberColumn == 0) {
+                if (!plumbing.isFixed()) {
+                    plumber.setFixing(true);
+                    plumbing.incrementRepairGauge();
+                }
+            }
+        }
+
+
+        boolean isFixedAll = true;
+        for(Plumbing plumbing : map.getPlumbingList()) {
+            if(!plumbing.isFixed()) {
+                isFixedAll = false;
+                break;
+            }
+        }
+
+        if(isFixedAll) {
+            sendEvent(OnGameEventListener.CLEAR);
+        }
+    }
+
+    private void updateDropPosition() {
+        drops.addDrop();
         for (Drop drop : drops.getDrops()) {
             drop.setPY( drop.getPY() + drop.getVY());
         }
 
-        drops.recycleDrops();
+        drops.recycleDrops(wave.getPY(), plumber);
     }
 
-    List<Brick> bricks = new ArrayList<>();
     private void updatePlumberPosition() {
+        // set default plumber
+        plumber.setFixing(false);
+
         // dt
         plumber.incrementVT();
 
@@ -197,16 +246,11 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
                 plumber.getPY() + plumber.getVY()
         );
 
-
         int tempPlumberRow = plumber.getTempRow();
         int tempPlumberColumn = plumber.getTempColumn();
 //        Log.d(TAG, "updatePlumberPosition: tempPlumber [row, column] # ["+tempPlumberRow+", "+tempPlumberColumn+"]");
 
-        int dx = plumber.getDX();
-        int dy = plumber.getDY();
-
-        // count bricks
-        bricks.clear();
+        // check brick
         for(Brick brick : map.getBrickList()) {
             int brickRow = brick.getRow();
             int brickColumn = brick.getColumn();
@@ -220,12 +264,21 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
 
                         plumber.setTempPY( brick.getTop() - plumber.getHeight() );
                         plumber.setVT(0);
+                        plumber.setOnGround(true);
             }
         }
 
-//        Log.d(TAG, "updatePlumberPosition: bricks Size # "+bricks.size());
+        // check ground
+        if(plumber.getTempPY() == mSurfaceHeight - plumber.getHeight()) {
+            plumber.setOnGround(true);
+        }
 
-        // TODO : check drops
+        // check water
+        if(plumber.getPY() > wave.getPY() + mSquareHeight / 2) {
+            plumber.setUnderWater(true);
+        } else {
+            plumber.setUnderWater(false);
+        }
 
         // confirm plumber's position
         plumber.confirmPosition();
@@ -244,19 +297,19 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
         // draw Map
         drawMap(canvas);
 
+        // draw plumbing
+        drawPlumbing(canvas);
+
         // draw plumber
         drawPlumber(canvas);
 
-        // draw drops
-        drawDrops(canvas);
+        // draw drop
+        drawDrop(canvas);
+
+        // draw wave;
+        drawWave(canvas);
 
         mSurfaceHolder.unlockCanvasAndPost(canvas);
-    }
-
-    private void drawDrops(Canvas canvas) {
-        for(Drop drop : drops.getDrops()) {
-            canvas.drawBitmap(drop.getImage(), drop.getPX(), drop.getPY(), null);
-        }
     }
 
     private void drawMap(Canvas canvas) {
@@ -264,9 +317,24 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
         canvas.drawBitmap(map.getImage(), new Matrix(), null);
     }
 
+    private void drawPlumbing(Canvas canvas) {
+        for(Plumbing plumbing : map.getPlumbingList()) {
+            canvas.drawBitmap(plumbing.getImage(), plumbing.getPX(), plumbing.getPY(), null);
+        }
+    }
+
     private void drawPlumber(Canvas canvas) {
         canvas.drawBitmap(plumber.getImage(), plumber.getPX(), plumber.getPY(), null);
-//        Log.d(TAG, "drawPlumber: p [x, y] # ["+plumber.getPX()+", "+plumber.getPY()+"]");
+    }
+
+    private void drawDrop(Canvas canvas) {
+        for(Drop drop : drops.getDrops()) {
+            canvas.drawBitmap(drop.getImage(), drop.getPX(), drop.getPY(), null);
+        }
+    }
+
+    private void drawWave(Canvas canvas) {
+        canvas.drawBitmap(wave.getImage(), wave.getPX(), wave.getPY(), null);
     }
 
     public void update(MotionEvent motionEvent) {
@@ -286,5 +354,15 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
 
     private void sendEvent(String msg) {
         mListener.onEvent(msg);
+    }
+
+    public void endGame(String reason) {
+        sendEvent(OnGameEventListener.DESTROY);
+
+        if(!mExecutor.isShutdown()) {
+            mExecutor.shutdownNow();
+        }
+
+        sendEvent(reason);
     }
 }

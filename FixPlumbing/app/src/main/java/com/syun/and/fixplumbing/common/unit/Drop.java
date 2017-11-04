@@ -1,11 +1,9 @@
-package com.syun.and.fixplumbing.common;
+package com.syun.and.fixplumbing.common.unit;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.util.Log;
 
-import com.syun.and.fixplumbing.Const;
 import com.syun.and.fixplumbing.R;
 
 import java.util.Random;
@@ -13,11 +11,11 @@ import java.util.Random;
 /**
  * Created by qijsb on 2017/11/02.
  */
-
-public class Drop {
+public class Drop extends BaseUnit {
     private static final String TAG = Drop.class.getSimpleName();
 
-    private Context mContext;
+    private Bitmap image;
+
     private int surfaceWidth;
     private int surfaceHeight;
     private int squareWidth;
@@ -35,8 +33,6 @@ public class Drop {
     private int vt;
     private int maxVT;
     private float g;
-
-    private Bitmap image;
 
     public Drop(Context context, int surfaceWidth, int surfaceHeight , int squareWidth, int squareHeight) {
         mContext = context;
@@ -65,9 +61,6 @@ public class Drop {
 
         image = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.drop, options);
         image = Bitmap.createScaledBitmap(image, width, height, true);
-
-        Log.d(TAG, "init: p [X, Y] # ["+pX+", "+pY+"]");
-        Log.d(TAG, "init: image [width, height] # ["+image.getWidth()+", "+image.getHeight()+"]");
     }
 
     public Bitmap getImage() {
@@ -85,6 +78,14 @@ public class Drop {
 
     public int getPY() {
         return pY;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
     }
 
     public void setPY(int pY) {

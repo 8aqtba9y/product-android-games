@@ -1,22 +1,24 @@
 package com.syun.and.fixplumbing.activity;
 
 import android.content.Context;
+import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.support.v7.app.AppCompatActivity;
+import android.os.Handler;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.TextView;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.syun.and.fixplumbing.views.GameView;
 import com.syun.and.fixplumbing.listener.OnGameEventListener;
 import com.syun.and.fixplumbing.R;
 
-public class MainActivity extends AppCompatActivity implements OnGameEventListener, View.OnTouchListener, SensorEventListener {
+public class MainActivity extends BaseActivity implements OnGameEventListener, View.OnTouchListener, SensorEventListener {
     private static final String TAG = MainActivity.class.getSimpleName();
 
     private GameView mGameView;
@@ -26,6 +28,9 @@ public class MainActivity extends AppCompatActivity implements OnGameEventListen
 
     /** 加速度センサーオブジェクト */
     private Sensor mAccelerometerSensor;
+
+    private TextView mCountDownTextView;
+    private int count;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +46,10 @@ public class MainActivity extends AppCompatActivity implements OnGameEventListen
 
         mGameView = findViewById(R.id.gameView);
         mGameView.init(this);
+
+//        count = 100;
+//        mCountDownTextView = findViewById(R.id.countDownTextView);
+//        mCountDownTextView.setText(String.valueOf(count));
 
         // センサーマネージャを獲得する
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -70,6 +79,8 @@ public class MainActivity extends AppCompatActivity implements OnGameEventListen
 
     @Override
     public void onEvent(String msg) {
+        Intent intent;
+
         switch (msg) {
             case OnGameEventListener.CREATE :
                 // 200msに一度SensorEventを観測するリスナを登録
@@ -83,6 +94,33 @@ public class MainActivity extends AppCompatActivity implements OnGameEventListen
                 mSensorManager.unregisterListener(this);
                 // 非アクティブ時にTouchEventを取らないようにリスなの登録解除
                 mGameView.setOnTouchListener(null);
+                break;
+
+            case OnGameEventListener.COUNT_DOWN :
+//                if(--count == 0) {
+//                    mGameView.endGame(OnGameEventListener.DEAD);
+//                } else {
+//                    runOnUiThread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            mCountDownTextView.setText(String.valueOf(count));
+//                        }
+//                    });
+//                }
+                break;
+
+            case OnGameEventListener.DEAD :
+                intent = new Intent();
+                intent.putExtra("key", 1);
+                setResult(RESULT_OK, intent);
+                finish();
+                break;
+
+            case OnGameEventListener.CLEAR :
+                intent = new Intent();
+                intent.putExtra("key", 2);
+                setResult(RESULT_OK, intent);
+                finish();
                 break;
         }
 
