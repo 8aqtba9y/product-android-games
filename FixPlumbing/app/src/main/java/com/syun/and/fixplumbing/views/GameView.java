@@ -4,6 +4,8 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Path;
+import android.graphics.RectF;
 import android.hardware.SensorEvent;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -294,6 +296,13 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
 
     private void present() {
         Canvas canvas = mSurfaceHolder.lockCanvas();
+
+        // draw background
+        canvas.drawColor(Color.BLACK);
+
+        // save and clipping
+        saveAndClipping(canvas);
+
         // draw Map
         drawMap(canvas);
 
@@ -303,6 +312,9 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
         // draw plumber
         drawPlumber(canvas);
 
+        // restoring
+        canvas.restore();
+
         // draw drop
         drawDrop(canvas);
 
@@ -310,6 +322,25 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
         drawWave(canvas);
 
         mSurfaceHolder.unlockCanvasAndPost(canvas);
+    }
+
+    private void saveAndClipping(Canvas canvas) {
+        // saving
+        canvas.save();
+
+        // clipping
+        float radius = mSquareWidth * 4;
+
+        float left = plumber.getCX() - radius;
+        float top = plumber.getCY() - radius;
+        float right = plumber.getCX() + radius;
+        float bottom = plumber.getCY() + radius;
+
+        RectF rectF = new RectF(left, top, right, bottom);
+        Path path = new Path();
+        path.addRoundRect(rectF, radius, radius, Path.Direction.CW);
+
+        canvas.clipPath(path);
     }
 
     private void drawMap(Canvas canvas) {
@@ -324,6 +355,7 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
     }
 
     private void drawPlumber(Canvas canvas) {
+        // drawing
         canvas.drawBitmap(plumber.getImage(), plumber.getPX(), plumber.getPY(), null);
     }
 

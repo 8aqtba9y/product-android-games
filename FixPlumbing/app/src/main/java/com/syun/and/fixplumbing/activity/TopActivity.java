@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.syun.and.fixplumbing.R;
 
 public class TopActivity extends BaseActivity {
@@ -13,6 +14,8 @@ public class TopActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_top);
+
+        FirebaseAnalytics.getInstance(this);
     }
 
     public void start(View view) {
