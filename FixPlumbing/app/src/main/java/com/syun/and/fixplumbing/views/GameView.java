@@ -146,7 +146,6 @@ public class GameView extends SurfaceView  implements SurfaceHolder.Callback2, R
         stopDrawing();
     }
 
-
     public void stopDrawing() {
         sendEvent(OnGameEventListener.DESTROY);
 
