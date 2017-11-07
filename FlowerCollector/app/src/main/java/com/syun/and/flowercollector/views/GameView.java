@@ -1,8 +1,11 @@
 package com.syun.and.flowercollector.views;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.hardware.SensorEvent;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -11,7 +14,10 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import com.syun.and.flowercollector.Const;
+import com.syun.and.flowercollector.R;
+import com.syun.and.flowercollector.common.Map;
 import com.syun.and.flowercollector.listener.OnGameEventListener;
+import com.syun.and.flowercollector.model.GameModel;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -37,10 +43,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Ru
     private int mSquareWidth;
     private int mSquareHeight;
 
-//    private Map map;
-//    private Plumber plumber;
-//    private Drops drops;
-//    private Wave wave;
+    private GameModel gameModel;
 
     public GameView(Context context) {
         super(context);
@@ -97,23 +100,17 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Ru
         initComponents();
 
         startDrawing(holder);
+        sendEvent(OnGameEventListener.REGISTER_LIGHT_SENSOR);
     }
 
     private void initComponents() {
-//        if(plumber == null && map == null) {
-//
-//            // init map
-//            map = new Map(mContext, mSurfaceWidth, mSurfaceHeight, mSquareWidth, mSquareHeight);
-//
-//            // init plumber
-//            plumber = new Plumber(mContext, mSurfaceWidth, mSurfaceHeight, mSquareWidth, mSquareHeight);
-//
-//            // init drops
-//            drops = new Drops(mContext, mSurfaceWidth, mSurfaceHeight, mSquareWidth, mSquareHeight);
-//
-//            // init wave
-//            wave = new Wave(mContext, mSurfaceWidth, mSurfaceHeight, mSquareWidth, mSquareHeight);
-//        }
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inSampleSize = 2;
+
+        // init gameModel
+        if(gameModel == null) {
+            gameModel = new GameModel(mContext, mSurfaceWidth, mSurfaceHeight);
+        }
     }
 
     public void startDrawing(SurfaceHolder holder) {
@@ -146,7 +143,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Ru
     public void run() {
         while(!mExecutor.isShutdown()) {
             // update Units
-//            update();
+            update();
 
             // present
             present();
@@ -182,12 +179,11 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Ru
     private void present() {
         Canvas canvas = mSurfaceHolder.lockCanvas();
 
-        canvas.drawColor(Color.BLUE);
         // draw Map
-//        drawMap(canvas);
+        drawMap(canvas);
 
         // draw plumbing
-//        drawPlumbing(canvas);
+        drawCharacter(canvas);
 
         // draw plumber
 //        drawPlumber(canvas);
@@ -198,7 +194,42 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Ru
         // draw wave;
 //        drawWave(canvas);
 
+        // draw keyboard
+        if(gameModel.getKeyboard().shouldShow())
+            drawKeyboard(canvas);
+
+        // handle lux
+        drawFilter(canvas);
+
         mSurfaceHolder.unlockCanvasAndPost(canvas);
+    }
+
+    private int lux;
+    private void drawFilter(Canvas canvas) {
+        canvas.drawARGB(lux, 0,0, 0);
+    }
+
+    private void drawMap(Canvas canvas) {
+        canvas.drawBitmap(gameModel.getMap().getImage(), gameModel.getMap().getLeft(), gameModel.getMap().getTop(), null);
+    }
+
+    private void drawKeyboard(Canvas canvas) {
+        canvas.drawBitmap(gameModel.getKeyboard().getKeyboardImage()
+                , gameModel.getKeyboard().getKeyboardCX()
+                , gameModel.getKeyboard().getKeyboardCY()
+                , null);
+
+        canvas.drawBitmap(gameModel.getKeyboard().getTapImage()
+                , gameModel.getKeyboard().getTapCX()
+                , gameModel.getKeyboard().getTapCY()
+                , null);
+    }
+
+    private void drawCharacter(Canvas canvas) {
+        canvas.drawBitmap(gameModel.getCharacter().getImage()
+                , gameModel.getCharacter().getCX()
+                , gameModel.getCharacter().getCY()
+                , null);
     }
 
     private void sendEvent(String msg) {
@@ -206,11 +237,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Ru
     }
 
     public void update(SensorEvent sensorEvent) {
-        int lux = (int) sensorEvent.values[0];
+        lux = 255 - (int) sensorEvent.values[0] < 0 ? 0 : 255 - (int) sensorEvent.values[0];
         Log.d(TAG, "update: lux # "+lux);
     }
 
     public void update(MotionEvent motionEvent) {
-
+        gameModel.parse(motionEvent);
     }
+
 }
