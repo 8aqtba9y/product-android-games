@@ -29,6 +29,7 @@ public class Keyboard {
 //    private float tapLeft, tapTop;
     private float tapCX, tapCY;
     private int tapWidth, tapHeight;
+    private int r;
 
     public Keyboard(Context context, int surfaceWidth, int surfaceHeight) {
         this.mContext = context;
@@ -49,6 +50,8 @@ public class Keyboard {
 
         tapWidth = mSquareWidth;
         tapHeight = mSquareHeight;
+
+        r = keyboardWidth / 2;
 
         keyboardImage = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.keyboard, options);
         keyboardImage = Bitmap.createScaledBitmap(keyboardImage, keyboardWidth, keyboardHeight, true);
@@ -100,10 +103,23 @@ public class Keyboard {
             case MotionEvent.ACTION_MOVE :
                 postX = motionEvent.getX(0);
                 postY = motionEvent.getY(0);
-                tapCX = postX - tapWidth / 2;
-                tapCY = postY - tapHeight / 2;
                 diffX = postX - preX;
                 diffY = postY - preY;
+
+                if(Math.abs(
+                        Math.sqrt(
+                                Math.pow(postX - preX, 2)
+                                + Math.pow(postY - preY, 2)
+                                )
+                        ) > keyboardWidth / 2)
+                {
+                    double theta = Math.atan2(diffY, diffX);
+                    tapCX = (float) (preX + r * Math.cos(theta)) - tapWidth / 2;
+                    tapCY = (float) (preY + r * Math.sin(theta)) - tapHeight / 2;
+                } else {
+                    tapCX = postX - tapWidth / 2;
+                    tapCY = postY - tapHeight / 2;
+                }
                 break;
 
             case MotionEvent.ACTION_UP :

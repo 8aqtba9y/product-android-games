@@ -5,7 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.hardware.SensorEvent;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -15,7 +15,7 @@ import android.view.SurfaceView;
 
 import com.syun.and.flowercollector.Const;
 import com.syun.and.flowercollector.R;
-import com.syun.and.flowercollector.common.Map;
+import com.syun.and.flowercollector.db.model.SeedModel;
 import com.syun.and.flowercollector.listener.OnGameEventListener;
 import com.syun.and.flowercollector.model.GameModel;
 
@@ -100,8 +100,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Ru
         initComponents();
 
         startDrawing(holder);
-        sendEvent(OnGameEventListener.REGISTER_LIGHT_SENSOR);
+//        sendEvent(OnGameEventListener.REGISTER_LIGHT_SENSOR);
     }
+
+    Bitmap seedImage;
+
+    private Paint black;
 
     private void initComponents() {
         BitmapFactory.Options options = new BitmapFactory.Options();
@@ -110,6 +114,14 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Ru
         // init gameModel
         if(gameModel == null) {
             gameModel = new GameModel(mContext, mSurfaceWidth, mSurfaceHeight);
+
+            seedImage = BitmapFactory.decodeResource(getResources(), R.drawable.seed, options);
+            seedImage = Bitmap.createScaledBitmap(seedImage, mSquareWidth, mSquareHeight, true);
+
+            black = new Paint();
+            black.setColor(Color.BLACK);
+            black.setStyle(Paint.Style.STROKE);
+            black.setStrokeWidth(5f);
         }
     }
 
@@ -120,6 +132,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Ru
             mExecutor = Executors.newSingleThreadExecutor();
         }
         mExecutor.submit(this);
+
+        // TODO : save
+        gameModel.save();
 
         sendEvent(OnGameEventListener.CREATE);
     }
@@ -201,12 +216,36 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Ru
         // handle lux
         drawFilter(canvas);
 
+        drawDebugLines(canvas);
+
+        drawSeed(canvas);
+
         mSurfaceHolder.unlockCanvasAndPost(canvas);
+    }
+
+    private void drawSeed(Canvas canvas) {
+        for (SeedModel seed : gameModel.getSeeds()) {
+            float left = seed.getCX() + gameModel.getMap().getLeft();
+            float top = seed.getCY();
+
+            if(!(left < 0) || !(left > mSurfaceWidth)) {
+                canvas.drawBitmap(seedImage,  left, top, null);
+            }
+        }
+    }
+
+    private void drawDebugLines(Canvas canvas) {
+        for (int i = 0; i < Const.COLUMN; i++) {
+            canvas.drawLine(i*mSquareWidth, 0, i*mSquareWidth, mSurfaceHeight, black);
+        }
+        for (int j = 0; j < Const.ROW; j++) {
+            canvas.drawLine(0, j*mSquareHeight, mSurfaceWidth, j*mSquareHeight, black);
+        }
     }
 
     private int lux;
     private void drawFilter(Canvas canvas) {
-        canvas.drawARGB(lux, 0,0, 0);
+//        canvas.drawARGB(lux, 0,0, 0);
     }
 
     private void drawMap(Canvas canvas) {

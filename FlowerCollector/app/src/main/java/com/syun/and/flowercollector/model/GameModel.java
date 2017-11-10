@@ -7,6 +7,11 @@ import com.syun.and.flowercollector.Const;
 import com.syun.and.flowercollector.common.Character;
 import com.syun.and.flowercollector.common.Keyboard;
 import com.syun.and.flowercollector.common.Map;
+import com.syun.and.flowercollector.db.model.SeedModel;
+
+import io.realm.Realm;
+import io.realm.RealmQuery;
+import io.realm.RealmResults;
 
 /**
  * Created by qijsb on 2017/11/07.
@@ -37,6 +42,44 @@ public class GameModel {
         map = new Map(mContext, mSurfaceWidth, mSurfaceHeight);
         keyboard = new Keyboard(mContext, mSurfaceWidth, mSurfaceHeight);
         character = new Character(mContext, mSurfaceWidth, mSurfaceHeight);
+
+        /**
+         * Writes
+         */
+        Realm realm = Realm.getDefaultInstance();
+        realm.beginTransaction();
+
+        // Create a new object
+        SeedModel seed = realm.createObject(SeedModel.class);
+        seed.setName("Seeds2");
+        seed.setCX(mSurfaceWidth);
+        seed.setCY(mSquareHeight/2);
+
+        realm.commitTransaction();
+
+        /**
+         * deletion
+         */
+//        Realm realm = Realm.getDefaultInstance();
+//        realm.beginTransaction();
+//
+//        RealmResults<SeedModel> result = realm.where(SeedModel.class).findAll();
+//
+//        // delete All
+//        result.deleteAllFromRealm();
+//
+//        realm.commitTransaction();
+    }
+
+    public RealmResults<SeedModel> getSeeds() {
+        Realm realm = Realm.getDefaultInstance();
+
+        // Build the query looking at seed:
+        RealmQuery<SeedModel> query = realm.where(SeedModel.class);
+
+        // Execute the query:
+        RealmResults<SeedModel> resultAll = query.findAll();
+        return resultAll;
     }
 
     public Map getMap() {
@@ -70,5 +113,9 @@ public class GameModel {
                 keyboard.parse(motionEvent);
                 break;
         }
+    }
+
+    public void save() {
+        // TODO : save seeds
     }
 }
