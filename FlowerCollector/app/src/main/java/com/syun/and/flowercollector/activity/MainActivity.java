@@ -15,7 +15,7 @@ import com.syun.and.flowercollector.R;
 import com.syun.and.flowercollector.listener.OnGameEventListener;
 import com.syun.and.flowercollector.views.GameView;
 
-public class MainActivity extends AppCompatActivity implements OnGameEventListener, View.OnTouchListener, SensorEventListener {
+public class MainActivity extends BaseActivity implements OnGameEventListener, View.OnTouchListener, SensorEventListener {
     private static final String TAG = MainActivity.class.getSimpleName();
 
     private GameView mGameView;
