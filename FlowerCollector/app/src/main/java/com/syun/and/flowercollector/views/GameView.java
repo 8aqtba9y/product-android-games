@@ -216,7 +216,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Ru
         // handle lux
         drawFilter(canvas);
 
-        drawDebugLines(canvas);
+//        drawDebugLines(canvas);
 
         drawSeed(canvas);
 

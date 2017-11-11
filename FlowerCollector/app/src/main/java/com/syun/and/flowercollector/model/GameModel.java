@@ -102,6 +102,7 @@ public class GameModel {
         switch (motionEvent.getAction()) {
             case MotionEvent.ACTION_DOWN :
                 keyboard.parse(motionEvent);
+                character.isMoving(true);
                 break;
 
             case MotionEvent.ACTION_MOVE:
@@ -111,6 +112,7 @@ public class GameModel {
 
             case MotionEvent.ACTION_UP:
                 keyboard.parse(motionEvent);
+                character.isMoving(false);
                 break;
         }
     }
