@@ -7,4 +7,5 @@ import com.syun.and.flowercollector.common.BaseCommon;
  */
 
 public class Bottle extends BaseCommon {
+
 }

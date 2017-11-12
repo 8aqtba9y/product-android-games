@@ -15,6 +15,7 @@ import android.view.SurfaceView;
 
 import com.syun.and.flowercollector.Const;
 import com.syun.and.flowercollector.R;
+import com.syun.and.flowercollector.common.unit.Seed;
 import com.syun.and.flowercollector.db.model.SeedModel;
 import com.syun.and.flowercollector.listener.OnGameEventListener;
 import com.syun.and.flowercollector.model.GameModel;
@@ -103,8 +104,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Ru
 //        sendEvent(OnGameEventListener.REGISTER_LIGHT_SENSOR);
     }
 
-    Bitmap seedImage;
-
     private Paint black;
 
     private void initComponents() {
@@ -115,15 +114,13 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Ru
         if(gameModel == null) {
             gameModel = new GameModel(mContext, mSurfaceWidth, mSurfaceHeight);
 
-            /* begin of temp code */
-            seedImage = BitmapFactory.decodeResource(getResources(), R.drawable.seed, options);
-            seedImage = Bitmap.createScaledBitmap(seedImage, mSquareWidth, mSquareHeight, true);
-            /* end of temp code */
-
             black = new Paint();
             black.setColor(Color.BLACK);
             black.setStyle(Paint.Style.STROKE);
             black.setStrokeWidth(5f);
+
+            // TODO : reload
+            gameModel.reload();
         }
     }
 
@@ -134,9 +131,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Ru
             mExecutor = Executors.newSingleThreadExecutor();
         }
         mExecutor.submit(this);
-
-        // TODO : save
-        gameModel.save();
 
         sendEvent(OnGameEventListener.CREATE);
     }
@@ -153,6 +147,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Ru
         if(!mExecutor.isShutdown()) {
             mExecutor.shutdownNow();
         }
+
+        // TODO : save
+        gameModel.save();
     }
 
 
@@ -199,6 +196,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Ru
         // draw Map
         drawMap(canvas);
 
+        // draw Seed
+        drawSeed(canvas);
+
         // draw character
         drawCharacter(canvas);
 
@@ -211,9 +211,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Ru
 
 //        drawDebugLines(canvas);
 
-        // draw Seed
-        drawSeed(canvas);
-
         // draw Inventory
         drawInventory(canvas);
 
@@ -225,12 +222,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Ru
     }
 
     private void drawSeed(Canvas canvas) {
-        for (SeedModel seed : gameModel.getSeeds()) {
+        for (Seed seed : gameModel.getSeedList()) {
             float left = seed.getCX() + gameModel.getMap().getLeft();
             float top = seed.getCY();
 
             if(!(left < 0) || !(left > mSurfaceWidth)) {
-                canvas.drawBitmap(seedImage,  left, top, null);
+                canvas.drawBitmap(seed.getImage(), left, top, null);
             }
         }
     }

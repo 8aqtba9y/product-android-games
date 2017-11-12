@@ -1,16 +1,18 @@
-package com.syun.and.flowercollector.common;
+package com.syun.and.flowercollector.common.unit;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 
 import com.syun.and.flowercollector.Const;
 import com.syun.and.flowercollector.R;
+import com.syun.and.flowercollector.common.BaseCommon;
+import com.syun.and.flowercollector.common.Map;
 
 /**
  * Created by qijsb on 2017/11/08.
  */
 
-public class Character extends BaseCommon{
+public class Character extends BaseCommon {
     private int mSquareWidth;
     private int mSquareHeight;
 
@@ -26,7 +28,7 @@ public class Character extends BaseCommon{
     private boolean isMoving;
 
     private float cX, cY;
-    protected int width, height;
+    private int width, height;
 
     private int direction;
 

@@ -12,10 +12,15 @@ public class SeedModel extends RealmObject {
     private float cX;
     private float cY;
 
+    private int growthPoint;
+
     private int healthPoint;
 
     private int lightGauge;
     private int waterGauge;
+
+    // TODO : add createTimeStamp
+    // TODO : add updateTimeStamp
 
     public String getName() {
         return name;
@@ -39,5 +44,37 @@ public class SeedModel extends RealmObject {
 
     public void setCY(float cY) {
         this.cY = cY;
+    }
+
+    public int getGrowthPoint() {
+        return growthPoint;
+    }
+
+    public void setGrowthPoint(int growthPoint) {
+        this.growthPoint = growthPoint;
+    }
+
+    public int getHealthPoint() {
+        return healthPoint;
+    }
+
+    public void setHealthPoint(int healthPoint) {
+        this.healthPoint = healthPoint;
+    }
+
+    public int getLightGauge() {
+        return lightGauge;
+    }
+
+    public void setLightGauge(int lightGauge) {
+        this.lightGauge = lightGauge;
+    }
+
+    public int getWaterGauge() {
+        return waterGauge;
+    }
+
+    public void setWaterGauge(int waterGauge) {
+        this.waterGauge = waterGauge;
     }
 }
