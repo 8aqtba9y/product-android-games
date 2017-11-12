@@ -10,7 +10,10 @@ import android.graphics.BitmapFactory;
 
 public class BaseCommon {
     protected Context mContext;
+    protected int mSurfaceWidth;
+    protected int mSurfaceHeight;
 
+    // TODO : modify bitmap sheet
     protected Bitmap[] parseDrawable(int[] res, int width, int height) {
         Bitmap[] bitmaps = new Bitmap[res.length];
         for (int i = 0; i < res.length; i++) {

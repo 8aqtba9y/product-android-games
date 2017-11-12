@@ -12,10 +12,7 @@ import com.syun.and.flowercollector.R;
  * Created by qijsb on 2017/11/07.
  */
 
-public class Keyboard {
-    private Context mContext;
-    private int mSurfaceWidth;
-    private int mSurfaceHeight;
+public class Keyboard extends BaseCommon{
     private int mSquareWidth;
     private int mSquareHeight;
 
