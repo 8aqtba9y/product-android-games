@@ -107,7 +107,18 @@ public class GameModel {
     }
 
     private boolean onInventoryTouch(MotionEvent motionEvent) {
-        return inventory.onInventoryTouch(motionEvent);
+        /* begin of debug code */
+        if(inventory.onInventoryTouch(motionEvent)) {
+            if(motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+                writeSeed((mSurfaceWidth / 2 - map.getLeft() - mSquareWidth / 2), character.getBottom());
+                Log.d(TAG, "onInventoryTouch: character.getBottom() # "+character.getBottom());
+            }
+            return true;
+        } else {
+            return false;
+        }
+        /* end of debug code */
+//        return inventory.onInventoryTouch(motionEvent);
     }
 
     public void drawInventory(Canvas canvas) {
@@ -117,6 +128,10 @@ public class GameModel {
     public void reload() {
 //        writeSeed(mSurfaceWidth/2, mSurfaceHeight/2);
         // TODO : reload seeds
+        reloadSeeds();
+        for (Seed seed : seedList) {
+            deleteSeed(seed);
+        }
         reloadSeeds();
     }
 
@@ -163,6 +178,7 @@ public class GameModel {
     }
 
     private void reloadSeeds() {
+        seedList.clear();
         Realm realm = Realm.getDefaultInstance();
 
         // Build the query looking at seed:

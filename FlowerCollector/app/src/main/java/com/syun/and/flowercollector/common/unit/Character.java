@@ -138,6 +138,10 @@ public class Character extends BaseCommon {
         return cY;
     }
 
+    public float getBottom() {
+        return cY + height / 2;
+    }
+
     public void updateDirectionWithTranslate(Map map, float diffX, float diffY) {
         direction = 0x00;
         if(diffY > mSquareHeight / 3) { // 下

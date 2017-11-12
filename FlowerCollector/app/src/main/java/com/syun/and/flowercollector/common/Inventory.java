@@ -103,8 +103,9 @@ public class Inventory extends BaseCommon {
             if(pX > openInventoryLeft && pX < openInventoryRight && pY > openInventoryTop && pY < openInventoryBottom) {
                 shouldOpen = false;
                 return true;
-            } else if(pX > openInventoryItemStart && pX < openInventoryItemEnd && pY > openInventoryTop && pY < openInventoryBottom) {
-
+            } else if(pX > openInventoryItemStart && pX < openInventoryItemStart + mSquareWidth
+                    && pY > openInventoryTop && pY < openInventoryBottom) {
+                // TODO : writeSeed(character.getCX(), character.getBottom());
                 return true;
             } else {
                 return false;
