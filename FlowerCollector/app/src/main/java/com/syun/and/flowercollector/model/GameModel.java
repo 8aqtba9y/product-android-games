@@ -1,10 +1,12 @@
 package com.syun.and.flowercollector.model;
 
 import android.content.Context;
+import android.graphics.Canvas;
 import android.view.MotionEvent;
 
 import com.syun.and.flowercollector.Const;
 import com.syun.and.flowercollector.common.Character;
+import com.syun.and.flowercollector.common.Inventory;
 import com.syun.and.flowercollector.common.Keyboard;
 import com.syun.and.flowercollector.common.Map;
 import com.syun.and.flowercollector.db.model.SeedModel;
@@ -16,7 +18,6 @@ import io.realm.RealmResults;
 /**
  * Created by qijsb on 2017/11/07.
  */
-
 public class GameModel {
     private Context mContext;
     private int mSurfaceWidth;
@@ -27,6 +28,7 @@ public class GameModel {
     private Map map;
     private Keyboard keyboard;
     private Character character;
+    private Inventory inventory;
 
     public GameModel(Context context, int surfaceWidth, int surfaceHeight) {
         this.mContext = context;
@@ -42,6 +44,7 @@ public class GameModel {
         map = new Map(mContext, mSurfaceWidth, mSurfaceHeight);
         keyboard = new Keyboard(mContext, mSurfaceWidth, mSurfaceHeight);
         character = new Character(mContext, mSurfaceWidth, mSurfaceHeight);
+        inventory = new Inventory(mContext, mSurfaceWidth, mSurfaceHeight);
 
         /**
          * Writes
@@ -98,16 +101,26 @@ public class GameModel {
         showKeyboard(motionEvent);
     }
 
+    private boolean shouldInventoryOpen;
+
     private void showKeyboard(MotionEvent motionEvent) {
         switch (motionEvent.getAction()) {
             case MotionEvent.ACTION_DOWN :
-                keyboard.parse(motionEvent);
-                character.isMoving(true);
+                if(onInventoryTouch(motionEvent)) {
+
+                } else {
+                    keyboard.parse(motionEvent);
+                    character.isMoving(true);
+                }
                 break;
 
             case MotionEvent.ACTION_MOVE:
-                keyboard.parse(motionEvent);
-                character.updateDirectionWithTranslate(map, keyboard.getDiffX(), keyboard.getDiffY());
+                if(character.isMoving()) {
+                    keyboard.parse(motionEvent);
+                    character.updateDirectionWithTranslate(map, keyboard.getDiffX(), keyboard.getDiffY());
+                } else {
+
+                }
                 break;
 
             case MotionEvent.ACTION_UP:
@@ -117,7 +130,15 @@ public class GameModel {
         }
     }
 
+    private boolean onInventoryTouch(MotionEvent motionEvent) {
+        return inventory.onInventoryTouch(motionEvent);
+    }
+
     public void save() {
         // TODO : save seeds
+    }
+
+    public void drawInventory(Canvas canvas) {
+
     }
 }

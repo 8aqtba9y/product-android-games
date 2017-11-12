@@ -11,8 +11,6 @@ import com.syun.and.flowercollector.R;
  */
 
 public class Character extends BaseCommon{
-    private int mSurfaceWidth;
-    private int mSurfaceHeight;
     private int mSquareWidth;
     private int mSquareHeight;
 
@@ -159,5 +157,9 @@ public class Character extends BaseCommon{
 
     public void isMoving(boolean b) {
         isMoving = b;
+    }
+
+    public boolean isMoving() {
+        return isMoving;
     }
 }

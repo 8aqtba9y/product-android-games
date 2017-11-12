@@ -115,8 +115,10 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Ru
         if(gameModel == null) {
             gameModel = new GameModel(mContext, mSurfaceWidth, mSurfaceHeight);
 
+            /* begin of temp code */
             seedImage = BitmapFactory.decodeResource(getResources(), R.drawable.seed, options);
             seedImage = Bitmap.createScaledBitmap(seedImage, mSquareWidth, mSquareHeight, true);
+            /* end of temp code */
 
             black = new Paint();
             black.setColor(Color.BLACK);
@@ -197,17 +199,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Ru
         // draw Map
         drawMap(canvas);
 
-        // draw plumbing
+        // draw character
         drawCharacter(canvas);
-
-        // draw plumber
-//        drawPlumber(canvas);
-
-        // draw drop
-//        drawDrop(canvas);
-
-        // draw wave;
-//        drawWave(canvas);
 
         // draw keyboard
         if(gameModel.getKeyboard().shouldShow())
@@ -218,9 +211,17 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Ru
 
 //        drawDebugLines(canvas);
 
+        // draw Seed
         drawSeed(canvas);
 
+        // draw Inventory
+        drawInventory(canvas);
+
         mSurfaceHolder.unlockCanvasAndPost(canvas);
+    }
+
+    private void drawInventory(Canvas canvas) {
+        gameModel.drawInventory(canvas);
     }
 
     private void drawSeed(Canvas canvas) {
