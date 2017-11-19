@@ -99,6 +99,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Ru
         // init gameModel
         if(gameModel == null) {
             gameModel = new GameModel(mContext, mSurfaceWidth, mSurfaceHeight);
+            gameModel.init(mListener);
         }
     }
 
@@ -141,6 +142,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Ru
     }
 
     private void update() {
+        gameModel.update();
     }
 
     private void sleep() {
@@ -155,11 +157,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Ru
     private void present() {
         Canvas canvas = mSurfaceHolder.lockCanvas();
 
-        // draw Map
-        gameModel.drawMap(canvas);
-
-        // draw Ball
-        gameModel.drawBall(canvas);
+        gameModel.draw(canvas);
 
         mSurfaceHolder.unlockCanvasAndPost(canvas);
     }
@@ -171,4 +169,5 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback2, Ru
     private void sendEvent(String msg) {
         mListener.onEvent(msg);
     }
+
 }

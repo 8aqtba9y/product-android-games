@@ -2,11 +2,13 @@ package com.syun.and.crazyball;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 
 public class MainActivity extends AppCompatActivity implements OnGameEventListener, View.OnTouchListener {
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     private GameView mGameView;
 
@@ -33,11 +35,13 @@ public class MainActivity extends AppCompatActivity implements OnGameEventListen
     @Override
     public void onEvent(String msg) {
         switch (msg) {
+            case OnGameEventListener.UNLOCK:
             case OnGameEventListener.CREATE:
                 // Touch時にTouchEventを取得するリスなを登録
                 mGameView.setOnTouchListener(this);
                 break;
 
+            case OnGameEventListener.LOCK:
             case OnGameEventListener.DESTROY:
                 // 非アクティブ時にTouchEventを取らないようにリスなの登録解除
                 mGameView.setOnTouchListener(null);
