@@ -14,4 +14,7 @@ public interface OnGameEventListener {
     String START = "start";
     String CLEAR = "clear";
     String DEAD = "dead";
+
+    String LOCK = "lock";
+    String UNLOCK = "unlock";
 }
